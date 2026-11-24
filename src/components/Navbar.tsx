@@ -14,14 +14,18 @@ function Navbar() {
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
 
-  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const desktopSearchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        searchContainerRef.current &&
-        !searchContainerRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+
+      const clickedDesktopSearch = desktopSearchRef.current?.contains(target);
+
+      const clickedMobileSearch = mobileSearchRef.current?.contains(target);
+
+      if (!clickedDesktopSearch && !clickedMobileSearch) {
         setShowSearch(false);
       }
     }
@@ -35,6 +39,7 @@ function Navbar() {
 
   useEffect(() => {
     setIsMenuOpen(false);
+    setShowSearch(false);
   }, [currentLocation.pathname]);
 
   function normalizeText(value: string) {
@@ -46,34 +51,9 @@ function Navbar() {
 
     const terms = normalizedQuery.split(" ").filter((term) => term.length > 0);
 
-    const expandedTerms = [...terms];
-
-    if (
-      normalizedQuery.includes("buy") ||
-      normalizedQuery.includes("sale") ||
-      normalizedQuery.includes("sell")
-    ) {
-      expandedTerms.push("for sale");
-    }
-
-    if (
-      normalizedQuery.includes("rent") ||
-      normalizedQuery.includes("rental")
-    ) {
-      expandedTerms.push("for rent");
-    }
-
-    if (
-      normalizedQuery.includes("shortlet") ||
-      normalizedQuery.includes("short let")
-    ) {
-      expandedTerms.push("shortlet");
-    }
-
     return {
       normalizedQuery,
       terms,
-      expandedTerms,
     };
   }
 
@@ -91,7 +71,8 @@ function Navbar() {
         const type = normalizeText(property.type);
         const purpose = normalizeText(property.purpose);
         const description = normalizeText(property.description);
-        const features = property.features
+
+        const features = (property.features || [])
           .map((feature) => normalizeText(feature))
           .join(" ");
 
@@ -129,31 +110,24 @@ function Navbar() {
         }
 
         if (
-          normalizedQuery.includes("buy") &&
-          property.purpose === "For Sale"
+          (normalizedQuery.includes("buy") ||
+            normalizedQuery.includes("sale")) &&
+          purpose.includes("sale")
         ) {
           score += 12;
         }
 
-        if (
-          normalizedQuery.includes("sale") &&
-          property.purpose === "For Sale"
-        ) {
+        if (normalizedQuery.includes("rent") && purpose.includes("rent")) {
           score += 12;
         }
 
         if (
-          normalizedQuery.includes("rent") &&
-          property.purpose === "For Rent"
+          normalizedQuery.includes("shortlet") ||
+          normalizedQuery.includes("short let")
         ) {
-          score += 12;
-        }
-
-        if (
-          normalizedQuery.includes("shortlet") &&
-          property.purpose === "Shortlet"
-        ) {
-          score += 12;
+          if (purpose.includes("shortlet")) {
+            score += 12;
+          }
         }
 
         const bedroomMatch = normalizedQuery.match(/\d+/);
@@ -229,11 +203,11 @@ function Navbar() {
   return (
     <header className="absolute left-0 top-0 z-50 w-full">
       <nav className="border-b border-white/20 bg-sky-500/20 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:px-5 sm:py-5 md:px-8">
           {/* Logo */}
           <Link
             to="/"
-            className="text-2xl font-bold tracking-tight sm:text-3xl"
+            className="shrink-0 text-xl font-bold tracking-tight sm:text-3xl"
           >
             <span className="text-[#60A5FA]">Diti</span>
             <span className="text-[#F5C542]">Homes</span>
@@ -243,42 +217,42 @@ function Navbar() {
           <div className="hidden items-center gap-7 lg:flex">
             <Link
               to="/"
-              className="text-sm font-medium text-white transition hover:text-[#F5C542]"
+              className="text-sm font-medium text-white transition-colors hover:text-[#F5C542]"
             >
               Home
             </Link>
 
             <Link
               to={getPurposeUrl("For Sale")}
-              className="text-sm font-medium text-white transition hover:text-[#F5C542]"
+              className="text-sm font-medium text-white transition-colors hover:text-[#F5C542]"
             >
               Buy
             </Link>
 
             <Link
               to={getPurposeUrl("For Rent")}
-              className="text-sm font-medium text-white transition hover:text-[#F5C542]"
+              className="text-sm font-medium text-white transition-colors hover:text-[#F5C542]"
             >
               Rent
             </Link>
 
             <Link
               to={getPurposeUrl("Shortlet")}
-              className="text-sm font-medium text-white transition hover:text-[#F5C542]"
+              className="text-sm font-medium text-white transition-colors hover:text-[#F5C542]"
             >
               Shortlet
             </Link>
 
             <Link
               to="/about"
-              className="text-sm font-medium text-white transition hover:text-[#F5C542]"
+              className="text-sm font-medium text-white transition-colors hover:text-[#F5C542]"
             >
               About
             </Link>
 
             <Link
               to="/contact"
-              className="text-sm font-medium text-white transition hover:text-[#F5C542]"
+              className="text-sm font-medium text-white transition-colors hover:text-[#F5C542]"
             >
               Contact
             </Link>
@@ -286,7 +260,7 @@ function Navbar() {
 
           {/* Desktop Right Side */}
           <div className="hidden items-center gap-3 lg:flex">
-            <div ref={searchContainerRef} className="relative">
+            <div ref={desktopSearchRef} className="relative">
               <div className="flex h-11 w-72 items-center rounded-xl border border-white/30 bg-white/15 px-3 backdrop-blur-md">
                 <FiSearch className="mr-2 shrink-0 text-white" size={19} />
 
@@ -300,7 +274,7 @@ function Navbar() {
                   onFocus={handleSearchFocus}
                   onKeyDown={handleSearchKeyDown}
                   placeholder="Search properties..."
-                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/75"
+                  className="w-full min-w-0 bg-transparent text-sm text-white outline-none placeholder:text-white/75"
                 />
 
                 {search && (
@@ -310,7 +284,7 @@ function Navbar() {
                       setSearch("");
                       setShowSearch(true);
                     }}
-                    className="text-white/70 transition hover:text-white"
+                    className="shrink-0 text-white/70 hover:text-white"
                     aria-label="Clear search"
                   >
                     <FiX size={17} />
@@ -331,7 +305,7 @@ function Navbar() {
 
             <Link
               to="/login"
-              className="flex h-11 items-center gap-2 rounded-xl border border-white/40 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/20"
+              className="flex h-11 items-center gap-2 rounded-xl border border-white/40 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20"
             >
               <FiUser size={17} />
               Login
@@ -339,75 +313,82 @@ function Navbar() {
 
             <Link
               to="/signup"
-              className="flex h-11 items-center rounded-xl bg-[#F5C542] px-5 text-sm font-bold text-[#071A3D] transition hover:bg-[#e6b92f]"
+              className="flex h-11 items-center rounded-xl bg-[#F5C542] px-5 text-sm font-bold text-[#071A3D] transition-colors hover:bg-[#e6b92f]"
             >
               Sign Up
             </Link>
           </div>
 
-          {/* Mobile Controls */}
-          <div className="flex items-center gap-3 lg:hidden">
+          {/* Mobile Controls: Search Always Visible */}
+          <div className="flex min-w-0 max-w-65 flex-1 items-center justify-end gap-2 lg:hidden">
+            {/* Mobile Search */}
+            <div ref={mobileSearchRef} className="relative min-w-0 flex-1">
+              <div className="flex h-10 w-full items-center rounded-xl border border-white/30 bg-white/15 px-2 backdrop-blur-md sm:px-3">
+                <FiSearch
+                  className="mr-1.5 shrink-0 text-white sm:mr-2"
+                  size={18}
+                />
+
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setShowSearch(true);
+                  }}
+                  onFocus={handleSearchFocus}
+                  onKeyDown={handleSearchKeyDown}
+                  placeholder="Search..."
+                  aria-label="Search properties"
+                  className="w-full min-w-0 bg-transparent text-xs text-white outline-none placeholder:text-white/75 sm:text-sm"
+                />
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch("");
+                      setShowSearch(true);
+                    }}
+                    className="ml-1 shrink-0 text-white/80"
+                    aria-label="Clear search"
+                  >
+                    <FiX size={16} />
+                  </button>
+                )}
+              </div>
+
+              {showSearch && (
+                <SearchDropdown
+                  search={search}
+                  matchingProperties={matchingProperties}
+                  popularSearches={popularSearches}
+                  onPropertyClick={openProperty}
+                  onPopularSearch={handlePopularSearch}
+                  mobile
+                />
+              )}
+            </div>
+
+            {/* Hamburger Menu */}
             <button
               type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 text-white backdrop-blur-md transition hover:bg-white/25"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white backdrop-blur-md hover:bg-white/25"
               aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMenuOpen}
             >
-              {isMenuOpen ? <FiX size={23} /> : <FiMenu size={23} />}
+              {isMenuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Navigation Menu */}
         {isMenuOpen && (
           <div className="border-t border-white/20 bg-[#071A3D]/95 px-5 py-5 backdrop-blur-xl lg:hidden">
             <div className="mx-auto max-w-7xl">
-              {/* Mobile Search */}
-              <div ref={searchContainerRef} className="relative">
-                <div className="flex h-12 items-center rounded-xl border border-white/20 bg-white/10 px-3">
-                  <FiSearch className="mr-2 shrink-0 text-white" size={19} />
-
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(event) => {
-                      setSearch(event.target.value);
-                      setShowSearch(true);
-                    }}
-                    onFocus={handleSearchFocus}
-                    onKeyDown={handleSearchKeyDown}
-                    placeholder="Search properties..."
-                    className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/60"
-                  />
-
-                  {search && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearch("");
-                        setShowSearch(true);
-                      }}
-                      className="text-white/70"
-                      aria-label="Clear search"
-                    >
-                      <FiX size={17} />
-                    </button>
-                  )}
-                </div>
-
-                {showSearch && (
-                  <SearchDropdown
-                    search={search}
-                    matchingProperties={matchingProperties}
-                    popularSearches={popularSearches}
-                    onPropertyClick={openProperty}
-                    onPopularSearch={handlePopularSearch}
-                  />
-                )}
-              </div>
-
               {/* Mobile Links */}
-              <div className="mt-5 flex flex-col">
+              <div className="flex flex-col">
                 <Link
                   to="/"
                   className="border-b border-white/10 py-4 text-sm font-medium text-white"
@@ -451,6 +432,7 @@ function Navbar() {
                 </Link>
               </div>
 
+              {/* Login and Sign Up */}
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <Link
                   to="/login"
@@ -494,6 +476,7 @@ type SearchDropdownProps = {
   popularSearches: string[];
   onPropertyClick: (propertyId: number) => void;
   onPopularSearch: (value: string) => void;
+  mobile?: boolean;
 };
 
 function SearchDropdown({
@@ -502,9 +485,14 @@ function SearchDropdown({
   popularSearches,
   onPropertyClick,
   onPopularSearch,
+  mobile = false,
 }: SearchDropdownProps) {
   return (
-    <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-100 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl">
+    <div
+      className={`absolute top-[calc(100%+10px)] z-100 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl ${
+        mobile ? "right-0 w-[min(360px,calc(100vw-24px))]" : "left-0 right-0"
+      }`}
+    >
       {!search.trim() ? (
         <div className="p-4">
           <p className="px-1 text-xs font-bold uppercase tracking-[0.15em] text-gray-400">
@@ -517,7 +505,7 @@ function SearchDropdown({
                 key={item}
                 type="button"
                 onClick={() => onPopularSearch(item)}
-                className="rounded-full bg-sky-50 px-3 py-2 text-xs font-semibold text-[#071A3D] transition hover:bg-sky-100"
+                className="rounded-full bg-sky-50 px-3 py-2 text-xs font-semibold text-[#071A3D] hover:bg-sky-100"
               >
                 {item}
               </button>
@@ -538,7 +526,7 @@ function SearchDropdown({
                 key={property.id}
                 type="button"
                 onClick={() => onPropertyClick(property.id)}
-                className="flex w-full items-center gap-3 border-b border-gray-100 p-3 text-left transition hover:bg-sky-50"
+                className="flex w-full items-center gap-3 border-b border-gray-100 p-3 text-left hover:bg-sky-50"
               >
                 <img
                   src={property.image}
@@ -580,10 +568,11 @@ function SearchDropdown({
           <button
             type="button"
             onClick={() => {
-              onPopularSearch(search);
-              window.location.href = `/properties?search=${encodeURIComponent(search)}`;
+              window.location.href = `/properties?search=${encodeURIComponent(
+                search,
+              )}`;
             }}
-            className="flex w-full items-center justify-center border-t border-gray-100 px-4 py-3 text-xs font-bold text-[#071A3D] transition hover:bg-gray-50"
+            className="flex w-full items-center justify-center border-t border-gray-100 px-4 py-3 text-xs font-bold text-[#071A3D] hover:bg-gray-50"
           >
             View all results
           </button>
