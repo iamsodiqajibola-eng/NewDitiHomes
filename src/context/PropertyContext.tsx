@@ -42,6 +42,7 @@ function removeDatabaseFields(row: DatabaseProperty): Property {
     updated_at: _updatedAt,
     ...property
   } = row;
+
   return property;
 }
 
@@ -147,16 +148,24 @@ function PropertyProvider({ children }: PropertyProviderProps) {
         current.filter((item) => item.id !== savedProperty.id),
       );
 
-      setDeletedProperties((current) =>
-        current.map((item) =>
-          item.id === savedProperty.id ? savedProperty : item,
-        ),
-      );
+      setDeletedProperties((current) => {
+        const exists = current.some((item) => item.id === savedProperty.id);
+
+        return exists
+          ? current.map((item) =>
+              item.id === savedProperty.id ? savedProperty : item,
+            )
+          : [savedProperty, ...current];
+      });
     } else {
       setProperties((current) =>
         current.map((item) =>
           item.id === savedProperty.id ? savedProperty : item,
         ),
+      );
+
+      setDeletedProperties((current) =>
+        current.filter((item) => item.id !== savedProperty.id),
       );
     }
   }

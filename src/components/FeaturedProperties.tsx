@@ -1,6 +1,4 @@
-import Environment from "./Environment";
 import PropertyCard from "./PropertyCard";
-import SkyVideo from "../assets/sky-video.mp4";
 import { useProperties } from "../context/PropertyContext";
 
 type FeaturedPropertiesProps = {
@@ -30,65 +28,89 @@ function FeaturedProperties({
     return matchesLocation && matchesType && matchesPurpose;
   });
 
-  // Display only the first three matching properties
-  // in the Featured Properties section.
   const featuredProperties = filteredProperties.slice(0, 3);
 
   return (
-    <Environment video={SkyVideo} overlay="bg-[#041126]/75" className="py-20">
-      <div className="mx-auto max-w-7xl px-5 md:px-8 lg:px-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <section className="relative overflow-hidden bg-[#111315] py-20 sm:py-24">
+      {/* Subtle gold background glow */}
+      <div className="pointer-events-none absolute -right-40 top-0 h-96 w-96 rounded-full bg-[#D6AD55]/6 blur-[120px]" />
+
+      <div className="relative mx-auto max-w-7xl px-5 md:px-8 lg:px-10">
+        {/* Section Heading */}
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37] drop-shadow-md">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D6AD55] sm:text-sm">
               Explore properties
             </p>
 
-            <h2 className="mt-2 text-3xl font-bold text-white drop-shadow-lg sm:text-4xl">
-              Featured Properties
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#F5F5F3] sm:text-4xl lg:text-5xl">
+              Featured <span className="text-[#D6AD55]">Properties</span>
             </h2>
 
-            <p className="mt-3 max-w-2xl text-white/90 drop-shadow-md">
-              Explore some of our available properties and find a place that
-              fits your needs.
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-[#A6A8AD] sm:text-base">
+              Explore our selection of available properties and discover a space
+              that feels right for you.
             </p>
           </div>
 
           <button
             type="button"
             onClick={onViewAll}
-            className="w-fit font-semibold text-white drop-shadow-md transition hover:text-[#D4AF37]"
+            className="group flex w-fit items-center gap-2 text-sm font-semibold text-[#F5F5F3] transition-colors hover:text-[#D6AD55]"
           >
-            View all properties →
+            View all properties
+            <span className="transition-transform duration-200 group-hover:translate-x-1">
+              →
+            </span>
           </button>
         </div>
 
+        {/* Properties */}
         {featuredProperties.length > 0 ? (
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featuredProperties.map((property) => (
               <PropertyCard key={property.id} property={property} />
             ))}
           </div>
         ) : (
-          <div className="mt-10 rounded-2xl border border-white/40 bg-white/90 px-6 py-12 text-center shadow-xl backdrop-blur-sm">
-            <h3 className="text-xl font-bold text-[#071A3D]">
+          <div className="mt-10 rounded-2xl border border-[#303238] bg-[#1B1D20] px-6 py-16 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#D6AD55]/20 bg-[#D6AD55]/10">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="25"
+                height="25"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#D6AD55"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+            </div>
+
+            <h3 className="mt-5 text-xl font-bold text-[#F5F5F3]">
               No properties found
             </h3>
 
-            <p className="mt-2 text-gray-500">
-              Try changing your location, property type, or purpose.
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#A6A8AD]">
+              We couldn't find properties matching your search. Try adjusting
+              your location, property type, or purpose.
             </p>
 
             <button
               type="button"
               onClick={onViewAll}
-              className="mt-5 rounded-xl bg-[#071A3D] px-6 py-3 font-semibold text-white transition hover:bg-[#123D78]"
+              className="mt-6 rounded-xl bg-[#D6AD55] px-6 py-3 text-sm font-bold text-[#111315] transition hover:bg-[#E5C477]"
             >
-              Clear search
+              View all properties
             </button>
           </div>
         )}
       </div>
-    </Environment>
+    </section>
   );
 }
 

@@ -7,7 +7,9 @@ import {
   FiUpload,
   FiX,
   FiStar,
+  FiCheckCircle,
 } from "react-icons/fi";
+
 import { useProperties } from "../context/PropertyContext";
 import type { Property } from "../data/properties";
 import { supabase } from "../lib/supabase";
@@ -216,8 +218,6 @@ function AddProperty() {
           .filter((feature) => feature !== ""),
       };
 
-      // Save the property to Supabase.
-      // The database generates the property ID automatically.
       const { data: savedProperty, error: saveError } = await supabase
         .from("properties")
         .insert(propertyData)
@@ -238,8 +238,6 @@ function AddProperty() {
         );
       }
 
-      // Update the existing client-side context so the dashboard
-      // can reflect the new listing without waiting for a refresh.
       addProperty(savedProperty as Property);
 
       alert("Property added successfully!");
@@ -257,22 +255,36 @@ function AddProperty() {
     }
   }
 
+  const inputClass =
+    "mt-2 w-full rounded-xl border border-[#303238] bg-[#111315] px-4 py-3 text-[#F5F5F3] outline-none transition placeholder:text-[#777B82] focus:border-[#D6AD55] focus:ring-2 focus:ring-[#D6AD55]/10";
+
+  const labelClass = "text-sm font-semibold text-[#F5F5F3]";
+
+  const sectionClass =
+    "rounded-2xl border border-[#303238] bg-[#1B1D20] p-6 shadow-xl shadow-black/10 sm:p-8";
+
   return (
-    <div className="min-h-screen bg-sky-50">
-      <header className="border-b border-sky-100 bg-white">
+    <div className="min-h-screen bg-[#111315] text-[#F5F5F3]">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-[#303238] bg-[#111315]/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-5 py-5 md:px-8">
           <Link
             to="/admin"
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-[#071A3D] transition hover:bg-sky-200"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#303238] bg-[#242629] text-[#D6AD55] transition hover:border-[#D6AD55] hover:bg-[#2C2F33]"
             aria-label="Back to dashboard"
           >
             <FiArrowLeft size={20} />
           </Link>
 
           <div>
-            <h1 className="text-2xl font-bold text-[#071A3D]">Add Property</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Add a new property to DitiHomes.
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
+              Property Management
+            </p>
+            <h1 className="mt-1 text-xl font-bold text-[#F5F5F3] sm:text-2xl">
+              Add Property
+            </h1>
+            <p className="mt-1 hidden text-sm text-[#A6A8AD] sm:block">
+              Add a new property listing to DitiHomes.
             </p>
           </div>
         </div>
@@ -281,68 +293,77 @@ function AddProperty() {
       <main className="mx-auto max-w-5xl px-5 py-10 md:px-8">
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <section className="rounded-2xl bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-xl font-bold text-[#071A3D]">
-              Basic Information
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Enter the main information about the property.
-            </p>
+          <section className={sectionClass}>
+            <div className="border-b border-[#303238] pb-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
+                Step 01
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-[#F5F5F3]">
+                Basic Information
+              </h2>
+              <p className="mt-1 text-sm text-[#A6A8AD]">
+                Enter the main information about the property.
+              </p>
+            </div>
 
             <div className="mt-6 grid gap-5 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label className="text-sm font-semibold text-[#071A3D]">
-                  Property Title
+                <label htmlFor="title" className={labelClass}>
+                  Property Title *
                 </label>
                 <input
+                  id="title"
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Modern 4 Bedroom Duplex"
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-[#D4AF37]"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-[#071A3D]">
-                  Location
+                <label htmlFor="location" className={labelClass}>
+                  Location *
                 </label>
                 <input
+                  id="location"
                   type="text"
                   required
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g. Lekki Phase 1, Lagos"
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-[#D4AF37]"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-[#071A3D]">
-                  Price
+                <label htmlFor="price" className={labelClass}>
+                  Price *
                 </label>
                 <input
+                  id="price"
                   type="text"
                   required
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="e.g. ₦85,000,000"
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-[#D4AF37]"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-[#071A3D]">
+                <label htmlFor="type" className={labelClass}>
                   Property Type
                 </label>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-[#777B82]">
                   What type of property are you uploading?
                 </p>
                 <select
+                  id="type"
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#D4AF37]"
+                  className={inputClass}
                 >
                   <option>Apartment</option>
                   <option>House</option>
@@ -354,13 +375,14 @@ function AddProperty() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-[#071A3D]">
+                <label htmlFor="purpose" className={labelClass}>
                   Listing Purpose
                 </label>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-[#777B82]">
                   Where should this property appear on DitiHomes?
                 </p>
                 <select
+                  id="purpose"
                   required
                   value={purpose}
                   onChange={(e) =>
@@ -368,7 +390,7 @@ function AddProperty() {
                       e.target.value as "For Sale" | "For Rent" | "Shortlet",
                     )
                   }
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#D4AF37]"
+                  className={inputClass}
                 >
                   <option value="For Sale">For Sale</option>
                   <option value="For Rent">For Rent</option>
@@ -377,87 +399,114 @@ function AddProperty() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-xl bg-sky-50 p-4">
-              <p className="text-sm font-semibold text-[#071A3D]">
+            <div className="mt-6 rounded-xl border border-[#D6AD55]/20 bg-[#D6AD55]/6 p-4">
+              <p className="text-sm font-semibold text-[#D6AD55]">
                 Listing destination
               </p>
-              <p className="mt-1 text-sm leading-6 text-gray-600">
+              <p className="mt-1 text-sm leading-6 text-[#A6A8AD]">
                 This property will automatically appear under{" "}
-                <span className="font-semibold text-[#071A3D]">{purpose}</span>{" "}
+                <span className="font-semibold text-[#E5C477]">{purpose}</span>{" "}
                 when customers browse DitiHomes.
               </p>
             </div>
           </section>
 
           {/* Property Details */}
-          <section className="rounded-2xl bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-xl font-bold text-[#071A3D]">
-              Property Details
-            </h2>
+          <section className={sectionClass}>
+            <div className="border-b border-[#303238] pb-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
+                Step 02
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-[#F5F5F3]">
+                Property Details
+              </h2>
+              <p className="mt-1 text-sm text-[#A6A8AD]">
+                Add the size and accommodation details.
+              </p>
+            </div>
 
             <div className="mt-6 grid gap-5 sm:grid-cols-3">
               <div>
-                <label className="text-sm font-semibold text-[#071A3D]">
+                <label htmlFor="bedrooms" className={labelClass}>
                   Bedrooms
                 </label>
                 <input
+                  id="bedrooms"
                   type="number"
                   min="0"
                   value={bedrooms}
                   onChange={(e) => setBedrooms(e.target.value)}
                   placeholder="4"
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#D4AF37]"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-[#071A3D]">
+                <label htmlFor="bathrooms" className={labelClass}>
                   Bathrooms
                 </label>
                 <input
+                  id="bathrooms"
                   type="number"
                   min="0"
                   value={bathrooms}
                   onChange={(e) => setBathrooms(e.target.value)}
                   placeholder="4"
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#D4AF37]"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-[#071A3D]">
+                <label htmlFor="area" className={labelClass}>
                   Area
                 </label>
                 <input
+                  id="area"
                   type="text"
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
                   placeholder="450 sqm"
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#D4AF37]"
+                  className={inputClass}
                 />
               </div>
             </div>
           </section>
 
           {/* Description */}
-          <section className="rounded-2xl bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-xl font-bold text-[#071A3D]">Description</h2>
+          <section className={sectionClass}>
+            <div className="border-b border-[#303238] pb-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
+                Step 03
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-[#F5F5F3]">
+                Property Description
+              </h2>
+              <p className="mt-1 text-sm text-[#A6A8AD]">
+                Give customers a clear picture of what the property offers.
+              </p>
+            </div>
+
             <textarea
               required
               rows={6}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe the property..."
-              className="mt-6 w-full resize-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-[#D4AF37]"
+              className={`${inputClass} mt-6 resize-none`}
             />
           </section>
 
           {/* Features */}
-          <section className="rounded-2xl bg-white p-6 shadow-sm sm:p-8">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <section className={sectionClass}>
+            <div className="flex flex-col gap-3 border-b border-[#303238] pb-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-xl font-bold text-[#071A3D]">Features</h2>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
+                  Step 04
+                </p>
+                <h2 className="mt-2 text-xl font-bold text-[#F5F5F3]">
+                  Property Features
+                </h2>
+                <p className="mt-1 text-sm text-[#A6A8AD]">
                   Add the features customers should know about.
                 </p>
               </div>
@@ -465,7 +514,7 @@ function AddProperty() {
               <button
                 type="button"
                 onClick={addFeature}
-                className="w-fit rounded-xl bg-sky-100 px-4 py-2 text-sm font-semibold text-[#071A3D] transition hover:bg-sky-200"
+                className="w-fit rounded-xl border border-[#D6AD55]/30 bg-[#D6AD55]/10 px-4 py-2.5 text-sm font-semibold text-[#D6AD55] transition hover:bg-[#D6AD55]/20"
               >
                 + Add Feature
               </button>
@@ -479,16 +528,17 @@ function AddProperty() {
                     value={feature}
                     onChange={(e) => handleFeatureChange(index, e.target.value)}
                     placeholder="e.g. 24/7 Security"
-                    className="min-w-0 flex-1 rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-[#D4AF37]"
+                    className={`${inputClass} mt-0 min-w-0 flex-1`}
                   />
 
                   {features.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeFeature(index)}
-                      className="rounded-xl px-4 text-sm font-semibold text-red-500 transition hover:bg-red-50"
+                      className="flex h-12 shrink-0 items-center gap-2 rounded-xl border border-red-500/20 px-3 text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
                     >
-                      Remove
+                      <FiX size={17} />
+                      <span className="hidden sm:inline">Remove</span>
                     </button>
                   )}
                 </div>
@@ -496,29 +546,35 @@ function AddProperty() {
             </div>
           </section>
 
-          {/* Multiple Property Images */}
-          <section className="rounded-2xl bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-xl font-bold text-[#071A3D]">
-              Property Images
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-gray-500">
-              Upload the exterior, living room, bedrooms, kitchen, bathrooms and
-              other parts of the property. Select multiple images at once and
-              add more later.
-            </p>
+          {/* Property Images */}
+          <section className={sectionClass}>
+            <div className="border-b border-[#303238] pb-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
+                Step 05
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-[#F5F5F3]">
+                Property Images
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-[#A6A8AD]">
+                Upload the exterior, living room, bedrooms, kitchen, bathrooms
+                and other parts of the property.
+              </p>
+            </div>
 
-            <label className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky-200 bg-sky-50 px-6 py-10 text-center transition hover:border-[#60A5FA] hover:bg-sky-100">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#071A3D] shadow-sm">
-                <FiUpload size={24} />
+            <label className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#D6AD55]/30 bg-[#111315] px-6 py-10 text-center transition hover:border-[#D6AD55] hover:bg-[#242629]">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#D6AD55]/20 bg-[#D6AD55]/10 text-[#D6AD55]">
+                <FiUpload size={25} />
               </div>
 
-              <p className="mt-4 font-semibold text-[#071A3D]">
+              <p className="mt-5 font-semibold text-[#F5F5F3]">
                 {isUploading ? "Uploading images..." : "Select property images"}
               </p>
-              <p className="mt-2 text-sm text-gray-500">
+
+              <p className="mt-2 text-sm text-[#A6A8AD]">
                 Choose multiple PNG, JPG or WebP images
               </p>
-              <p className="mt-1 text-xs text-gray-400">
+
+              <p className="mt-2 text-xs text-[#777B82]">
                 Maximum 10 MB per image. Select this area again to add more
                 photos.
               </p>
@@ -534,24 +590,29 @@ function AddProperty() {
             </label>
 
             {isUploading && (
-              <p className="mt-4 text-sm font-medium text-[#071A3D]">
-                Uploading your images to Supabase Storage. Please wait...
-              </p>
+              <div className="mt-5 rounded-xl border border-[#D6AD55]/20 bg-[#D6AD55]/6 p-4">
+                <p className="text-sm font-medium text-[#E5C477]">
+                  Uploading your images to Supabase Storage. Please wait...
+                </p>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#303238]">
+                  <div className="h-full w-1/2 animate-pulse rounded-full bg-[#D6AD55]" />
+                </div>
+              </div>
             )}
 
             {images.length > 0 ? (
               <div className="mt-8">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h3 className="font-bold text-[#071A3D]">
+                    <h3 className="font-bold text-[#F5F5F3]">
                       Uploaded Images ({images.length})
                     </h3>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-[#A6A8AD]">
                       Select an image to make it the main cover photo.
                     </p>
                   </div>
 
-                  <span className="w-fit rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-[#071A3D]">
+                  <span className="w-fit rounded-full border border-[#D6AD55]/20 bg-[#D6AD55]/10 px-3 py-1 text-xs font-semibold text-[#D6AD55]">
                     {images.length} {images.length === 1 ? "photo" : "photos"}
                   </span>
                 </div>
@@ -560,10 +621,10 @@ function AddProperty() {
                   {images.map((imageUrl, index) => (
                     <div
                       key={imageUrl}
-                      className={`overflow-hidden rounded-2xl border-2 bg-white transition ${
+                      className={`overflow-hidden rounded-2xl border-2 bg-[#111315] transition ${
                         coverImageIndex === index
-                          ? "border-[#D4AF37] shadow-lg"
-                          : "border-gray-100"
+                          ? "border-[#D6AD55] shadow-lg shadow-[#D6AD55]/10"
+                          : "border-[#303238]"
                       }`}
                     >
                       <button
@@ -580,25 +641,26 @@ function AddProperty() {
                         />
 
                         {coverImageIndex === index ? (
-                          <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-[#D4AF37] px-2 py-2 text-xs font-bold text-[#071A3D]">
+                          <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-[#D6AD55] px-2 py-2 text-xs font-bold text-[#111315]">
                             <FiStar size={14} />
                             Main Cover Photo
                           </span>
                         ) : (
-                          <span className="absolute bottom-2 left-2 rounded-lg bg-black/70 px-2 py-1 text-xs font-medium text-white">
+                          <span className="absolute bottom-2 left-2 rounded-lg bg-black/75 px-2 py-1 text-xs font-medium text-white">
                             Photo {index + 1}
                           </span>
                         )}
                       </button>
 
                       <div className="flex items-center justify-between gap-2 p-3">
-                        <span className="truncate text-xs text-gray-500">
+                        <span className="truncate text-xs text-[#A6A8AD]">
                           Image {index + 1}
                         </span>
+
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-50"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-400 transition hover:bg-red-500/10"
                           aria-label={`Remove image ${index + 1}`}
                         >
                           <FiX size={18} />
@@ -609,9 +671,9 @@ function AddProperty() {
                 </div>
               </div>
             ) : (
-              <div className="mt-5 flex items-start gap-3 rounded-xl bg-amber-50 p-4">
-                <FiImage className="mt-0.5 shrink-0 text-amber-600" size={20} />
-                <p className="text-sm leading-6 text-amber-800">
+              <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/6 p-4">
+                <FiImage className="mt-0.5 shrink-0 text-[#D6AD55]" size={20} />
+                <p className="text-sm leading-6 text-[#A6A8AD]">
                   At least one image is required. Your first uploaded image will
                   be the cover photo unless you select another.
                 </p>
@@ -619,11 +681,11 @@ function AddProperty() {
             )}
           </section>
 
-          {/* Buttons */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          {/* Form Actions */}
+          <div className="flex flex-col-reverse gap-3 border-t border-[#303238] pt-6 sm:flex-row sm:justify-end">
             <Link
               to="/admin"
-              className="rounded-xl border border-gray-200 bg-white px-6 py-3 text-center font-semibold text-[#071A3D] transition hover:bg-gray-50"
+              className="rounded-xl border border-[#303238] bg-[#242629] px-6 py-3.5 text-center font-semibold text-[#F5F5F3] transition hover:border-[#D6AD55] hover:text-[#D6AD55]"
             >
               Cancel
             </Link>
@@ -631,9 +693,10 @@ function AddProperty() {
             <button
               type="submit"
               disabled={isUploading || isSaving}
-              className="flex items-center justify-center gap-2 rounded-xl bg-[#071A3D] px-6 py-3 font-semibold text-white transition hover:bg-[#123D78] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex items-center justify-center gap-2 rounded-xl bg-[#D6AD55] px-6 py-3.5 font-bold text-[#111315] transition hover:bg-[#E5C477] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <FiSave size={18} />
+              {isSaving ? <FiCheckCircle size={18} /> : <FiSave size={18} />}
+
               {isUploading
                 ? "Uploading Images..."
                 : isSaving

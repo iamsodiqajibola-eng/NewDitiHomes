@@ -1,1 +1,262 @@
 @import "tailwindcss";
+
+:root {
+  font-family: "Inter", "Segoe UI", sans-serif;
+
+  --dh-bg: #111315;
+  --dh-bg-secondary: #1b1d20;
+  --dh-surface: #242629;
+  --dh-surface-hover: #2c2f33;
+
+  --dh-gold: #d6ad55;
+  --dh-gold-light: #e5c477;
+  --dh-gold-dark: #b68b35;
+
+  --dh-white: #f5f5f3;
+  --dh-muted: #a6a8ad;
+  --dh-border: #303238;
+
+  --dh-danger: #ef6464;
+  --dh-success: #55b98a;
+
+  color-scheme: dark;
+}
+
+/* ================================
+   GLOBAL RESET
+================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--dh-bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--dh-bg);
+  color: var(--dh-white);
+  font-family: "Inter", "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  text-decoration: none;
+}
+
+::selection {
+  background: var(--dh-gold);
+  color: #111315;
+}
+
+/* ================================
+   SCROLLBAR
+================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dh-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #41444a;
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dh-gold-dark);
+}
+
+/* ================================
+   ACCESSIBILITY
+================================ */
+
+:focus-visible {
+  outline: 2px solid var(--dh-gold);
+  outline-offset: 3px;
+}
+
+/* ================================
+   DITIHOMES PAGE STYLES
+================================ */
+
+.dh-page {
+  min-height: 100vh;
+  background: var(--dh-bg);
+  color: var(--dh-white);
+}
+
+.dh-section {
+  background: var(--dh-bg-secondary);
+}
+
+.dh-surface {
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+}
+
+.dh-card {
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  border-radius: 16px;
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s ease,
+    background 0.25s ease;
+}
+
+.dh-card:hover {
+  border-color: rgba(214, 173, 85, 0.45);
+}
+
+.dh-gold {
+  color: var(--dh-gold);
+}
+
+.dh-muted {
+  color: var(--dh-muted);
+}
+
+/* ================================
+   INPUTS
+================================ */
+
+.dh-input {
+  display: block;
+  width: 100%;
+  background: var(--dh-bg-secondary);
+  color: var(--dh-white);
+  border: 1px solid var(--dh-border);
+  border-radius: 12px;
+  padding: 13px 16px;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dh-input::placeholder {
+  color: #777b82;
+  opacity: 1;
+}
+
+.dh-input:focus {
+  border-color: var(--dh-gold);
+  box-shadow: 0 0 0 3px rgba(214, 173, 85, 0.12);
+}
+
+/* Input spacing when an icon is positioned inside */
+
+.dh-input.dh-input-with-icon {
+  padding-left: 48px !important;
+}
+
+/* ================================
+   BUTTONS
+================================ */
+
+.dh-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--dh-gold);
+  color: #111315;
+  padding: 13px 22px;
+  border-radius: 12px;
+  font-weight: 700;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.dh-button-primary:hover {
+  background: var(--dh-gold-light);
+  transform: translateY(-1px);
+}
+
+.dh-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--dh-white);
+  border: 1px solid var(--dh-border);
+  padding: 13px 22px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.dh-button-secondary:hover {
+  border-color: var(--dh-gold);
+  color: var(--dh-gold);
+}
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 640px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ================================
+   REDUCED MOTION
+================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
