@@ -113,6 +113,8 @@ function PropertyProvider({ children }: PropertyProviderProps) {
       .update({
         title: updatedProperty.title,
         location: updatedProperty.location,
+        latitude: updatedProperty.latitude ?? null,
+        longitude: updatedProperty.longitude ?? null,
         price: updatedProperty.price,
         type: updatedProperty.type,
         purpose: updatedProperty.purpose,

@@ -2,6 +2,11 @@ export type Property = {
   id: number;
   title: string;
   location: string;
+
+  // Geographic coordinates for the property map
+  latitude?: number | null;
+  longitude?: number | null;
+
   price: string;
   type: string;
   purpose: "For Sale" | "For Rent" | "Shortlet";
