@@ -3,6 +3,7 @@
 :root {
   font-family: "Inter", "Segoe UI", sans-serif;
 
+  /* Dark theme — default */
   --dh-bg: #111315;
   --dh-bg-secondary: #1b1d20;
   --dh-surface: #242629;
@@ -22,10 +23,28 @@
   color-scheme: dark;
 }
 
-/* ================================
-   GLOBAL RESET
-================================ */
+/* Light theme */
+:root[data-theme="light"] {
+  --dh-bg: #f7f8fa;
+  --dh-bg-secondary: #ffffff;
+  --dh-surface: #ffffff;
+  --dh-surface-hover: #f0f1f3;
 
+  --dh-gold: #b68b35;
+  --dh-gold-light: #c99e48;
+  --dh-gold-dark: #987027;
+
+  --dh-white: #202226;
+  --dh-muted: #6b7078;
+  --dh-border: #e1e3e7;
+
+  --dh-danger: #d94b4b;
+  --dh-success: #27865e;
+
+  color-scheme: light;
+}
+
+/* GLOBAL RESET */
 * {
   box-sizing: border-box;
 }
@@ -45,6 +64,9 @@ body {
   font-family: "Inter", "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
 #root {
@@ -80,10 +102,7 @@ a {
   color: #111315;
 }
 
-/* ================================
-   SCROLLBAR
-================================ */
-
+/* SCROLLBAR */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -93,7 +112,7 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #41444a;
+  background: var(--dh-muted);
   border-radius: 20px;
 }
 
@@ -101,19 +120,13 @@ a {
   background: var(--dh-gold-dark);
 }
 
-/* ================================
-   ACCESSIBILITY
-================================ */
-
+/* ACCESSIBILITY */
 :focus-visible {
   outline: 2px solid var(--dh-gold);
   outline-offset: 3px;
 }
 
-/* ================================
-   DITIHOMES PAGE STYLES
-================================ */
-
+/* DITIHOMES PAGE STYLES */
 .dh-page {
   min-height: 100vh;
   background: var(--dh-bg);
@@ -151,10 +164,7 @@ a {
   color: var(--dh-muted);
 }
 
-/* ================================
-   INPUTS
-================================ */
-
+/* INPUTS */
 .dh-input {
   display: block;
   width: 100%;
@@ -166,11 +176,12 @@ a {
   outline: none;
   transition:
     border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
 .dh-input::placeholder {
-  color: #777b82;
+  color: var(--dh-muted);
   opacity: 1;
 }
 
@@ -179,16 +190,11 @@ a {
   box-shadow: 0 0 0 3px rgba(214, 173, 85, 0.12);
 }
 
-/* Input spacing when an icon is positioned inside */
-
 .dh-input.dh-input-with-icon {
   padding-left: 48px !important;
 }
 
-/* ================================
-   BUTTONS
-================================ */
-
+/* BUTTONS */
 .dh-button-primary {
   display: inline-flex;
   align-items: center;
@@ -231,10 +237,7 @@ a {
   color: var(--dh-gold);
 }
 
-/* ================================
-   MOBILE
-================================ */
-
+/* MOBILE */
 @media (max-width: 640px) {
   ::-webkit-scrollbar {
     width: 4px;
@@ -246,10 +249,7 @@ a {
   }
 }
 
-/* ================================
-   REDUCED MOTION
-================================ */
-
+/* REDUCED MOTION */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

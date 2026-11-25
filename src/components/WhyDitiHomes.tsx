@@ -33,23 +33,23 @@ const reasons = [
 
 function WhyDitiHomes() {
   return (
-    <section className="relative overflow-hidden bg-[#111315] py-20 sm:py-24">
+    <section className="relative overflow-hidden bg-(--dh-bg) py-20 transition-colors duration-300 sm:py-24">
       {/* Background Decoration */}
       <div className="pointer-events-none absolute -right-40 top-10 h-96 w-96 rounded-full bg-[#D6AD55]/5 blur-[120px]" />
 
       <div className="relative mx-auto max-w-7xl px-5 md:px-8 lg:px-10">
         {/* Heading */}
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D6AD55] sm:text-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-(--dh-gold) sm:text-sm">
             Why DitiHomes
           </p>
 
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#F5F5F3] sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-(--dh-white) sm:text-4xl lg:text-5xl">
             Finding a home should{" "}
-            <span className="text-[#D6AD55]">feel easy.</span>
+            <span className="text-(--dh-gold)">feel easy.</span>
           </h2>
 
-          <p className="mt-4 text-sm leading-7 text-[#A6A8AD] sm:text-base">
+          <p className="mt-4 text-sm leading-7 text-(--dh-muted) sm:text-base">
             DitiHomes brings properties, locations, and trusted professionals
             together to make your journey to finding a home simpler.
           </p>
@@ -63,28 +63,28 @@ function WhyDitiHomes() {
             return (
               <article
                 key={reason.id}
-                className="group relative overflow-hidden rounded-2xl border border-[#303238] bg-[#1B1D20] p-6 transition-all duration-300 hover:-translate-y-2 hover:border-[#D6AD55]/50 hover:bg-[#242629]"
+                className="group relative overflow-hidden rounded-2xl border border-(--dh-border) bg-(--dh-bg-secondary) p-6 transition-all duration-300 hover:-translate-y-2 hover:border-(--dh-gold)/50 hover:bg-(--dh-surface-hover)"
               >
                 {/* Number */}
-                <span className="absolute right-5 top-5 text-4xl font-bold text-white/4 transition-colors group-hover:text-[#D6AD55]/10">
+                <span className="absolute right-5 top-5 text-4xl font-bold text-(--dh-muted)/10 transition-colors group-hover:text-(--dh-gold)/20">
                   0{index + 1}
                 </span>
 
                 {/* Icon */}
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#D6AD55]/20 bg-[#D6AD55]/10 text-[#D6AD55] transition-all duration-300 group-hover:border-[#D6AD55] group-hover:bg-[#D6AD55] group-hover:text-[#111315]">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-(--dh-gold)/20 bg-(--dh-gold)/10 text-(--dh-gold) transition-all duration-300 group-hover:border-(--dh-gold) group-hover:bg-(--dh-gold) group-hover:text-[#111315]">
                   <Icon size={25} />
                 </div>
 
-                <h3 className="mt-6 text-lg font-bold text-[#F5F5F3] transition-colors group-hover:text-[#E5C477]">
+                <h3 className="mt-6 text-lg font-bold text-(--dh-white) transition-colors group-hover:text-(--dh-gold-light)">
                   {reason.title}
                 </h3>
 
-                <p className="mt-3 text-sm leading-7 text-[#A6A8AD]">
+                <p className="mt-3 text-sm leading-7 text-(--dh-muted)">
                   {reason.description}
                 </p>
 
                 {/* Bottom Accent */}
-                <div className="mt-6 h-0.5 w-10 rounded-full bg-[#D6AD55]/40 transition-all duration-300 group-hover:w-16 group-hover:bg-[#D6AD55]" />
+                <div className="mt-6 h-0.5 w-10 rounded-full bg-(--dh-gold)/40 transition-all duration-300 group-hover:w-16 group-hover:bg-(--dh-gold)" />
               </article>
             );
           })}

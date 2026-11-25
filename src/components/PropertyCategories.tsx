@@ -38,22 +38,22 @@ function PropertyCategories() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-[#1B1D20] py-20 sm:py-24">
+    <section className="relative overflow-hidden bg-(--dh-bg-secondary) py-20 transition-colors duration-300 sm:py-24">
       {/* Subtle background glow */}
       <div className="pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full bg-[#D6AD55]/5 blur-[120px]" />
 
       <div className="relative mx-auto max-w-7xl px-5 md:px-8 lg:px-10">
         {/* Section Heading */}
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D6AD55] sm:text-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-(--dh-gold) sm:text-sm">
             Find your way home
           </p>
 
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#F5F5F3] sm:text-4xl lg:text-5xl">
-            What are you <span className="text-[#D6AD55]">looking for?</span>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-(--dh-white) sm:text-4xl lg:text-5xl">
+            What are you <span className="text-(--dh-gold)">looking for?</span>
           </h2>
 
-          <p className="mt-4 text-sm leading-7 text-[#A6A8AD] sm:text-base">
+          <p className="mt-4 text-sm leading-7 text-(--dh-muted) sm:text-base">
             Whether you're buying, renting, or looking for a shortlet, DitiHomes
             makes it easier to find a place that feels right.
           </p>
@@ -64,7 +64,7 @@ function PropertyCategories() {
           {categories.map((category) => (
             <article
               key={category.id}
-              className="group overflow-hidden rounded-2xl border border-[#303238] bg-[#242629] transition-all duration-300 hover:-translate-y-2 hover:border-[#D6AD55]/50 hover:shadow-xl hover:shadow-black/20"
+              className="group overflow-hidden rounded-2xl border border-(--dh-border) bg-(--dh-surface) transition-all duration-300 hover:-translate-y-2 hover:border-(--dh-gold)/50 hover:shadow-xl hover:shadow-black/10"
             >
               {/* Image */}
               <div className="relative h-64 overflow-hidden">
@@ -78,7 +78,7 @@ function PropertyCategories() {
                 <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/15 to-transparent" />
 
                 <div className="absolute bottom-5 left-5">
-                  <span className="mb-2 inline-block rounded-full border border-[#D6AD55]/40 bg-black/40 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#E5C477] backdrop-blur-sm">
+                  <span className="mb-2 inline-block rounded-full border border-(--dh-gold)/40 bg-black/40 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#E5C477] backdrop-blur-sm">
                     DitiHomes Collection
                   </span>
 
@@ -90,14 +90,14 @@ function PropertyCategories() {
 
               {/* Content */}
               <div className="p-6">
-                <p className="text-sm leading-7 text-[#A6A8AD]">
+                <p className="text-sm leading-7 text-(--dh-muted)">
                   {category.description}
                 </p>
 
                 <button
                   type="button"
                   onClick={() => handleExplore(category.purpose)}
-                  className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#D6AD55] px-5 py-3 text-sm font-bold text-[#111315] transition-all duration-200 hover:bg-[#E5C477]"
+                  className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-(--dh-gold) px-5 py-3 text-sm font-bold text-[#111315] transition-all duration-200 hover:bg-(--dh-gold-light)"
                 >
                   Explore Properties
                   <span className="transition-transform duration-200 group-hover:translate-x-1">

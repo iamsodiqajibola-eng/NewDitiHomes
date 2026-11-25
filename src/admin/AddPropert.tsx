@@ -1,713 +1,642 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
-  FiArrowLeft,
-  FiImage,
-  FiSave,
-  FiUpload,
+  FiGrid,
+  FiUsers,
+  FiHome,
+  FiClipboard,
+  FiMessageSquare,
+  FiLifeBuoy,
+  FiSettings,
+  FiSearch,
+  FiEye,
+  FiCheck,
   FiX,
-  FiStar,
-  FiCheckCircle,
+  FiMapPin,
+  FiMaximize2,
+  FiShield,
+  FiAlertCircle,
 } from "react-icons/fi";
+import { Link, useLocation } from "react-router-dom";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
-import { useProperties } from "../context/PropertyContext";
-import type { Property } from "../data/properties";
-import { supabase } from "../lib/supabase";
+type PropertyStatus = "Pending" | "Approved" | "Rejected";
 
-function AddProperty() {
-  const navigate = useNavigate();
-  const { addProperty } = useProperties();
+type Property = {
+  id: number;
+  title: string;
+  location: string;
+  agent: string;
+  price: string;
+  category: string;
+  type: string;
+  bedrooms: number;
+  bathrooms: number;
+  size: string;
+  date: string;
+  status: PropertyStatus;
+  description: string;
+  address: string;
+  images: number;
+};
 
-  const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [price, setPrice] = useState("");
-  const [type, setType] = useState("Apartment");
-  const [purpose, setPurpose] = useState<"For Sale" | "For Rent" | "Shortlet">(
-    "For Sale",
+const initialProperties: Property[] = [
+  {
+    id: 1,
+    title: "Luxury 4 Bedroom Duplex",
+    location: "Lekki Phase 1, Lagos",
+    agent: "Emmanuel Adewale",
+    price: "₦185,000,000",
+    category: "Sale",
+    type: "Detached Duplex",
+    bedrooms: 4,
+    bathrooms: 5,
+    size: "450 sqm",
+    date: "25 Nov 2026",
+    status: "Pending",
+    description:
+      "A modern luxury duplex with spacious rooms, fitted kitchen, private parking and contemporary finishing.",
+    address: "Lekki Phase 1, Lagos",
+    images: 8,
+  },
+  {
+    id: 2,
+    title: "Modern 3 Bedroom Apartment",
+    location: "Ikeja GRA, Lagos",
+    agent: "Blessing Okoro",
+    price: "₦8,500,000 / year",
+    category: "Rent",
+    type: "Apartment",
+    bedrooms: 3,
+    bathrooms: 3,
+    size: "180 sqm",
+    date: "24 Nov 2026",
+    status: "Pending",
+    description:
+      "A well-finished apartment in a secure residential environment with good access to major roads.",
+    address: "Ikeja GRA, Lagos",
+    images: 6,
+  },
+  {
+    id: 3,
+    title: "5 Bedroom Detached House",
+    location: "Banana Island, Lagos",
+    agent: "Samuel Ibrahim",
+    price: "₦450,000,000",
+    category: "Sale",
+    type: "Detached House",
+    bedrooms: 5,
+    bathrooms: 6,
+    size: "650 sqm",
+    date: "22 Nov 2026",
+    status: "Approved",
+    description:
+      "A premium detached residence with spacious living areas and modern architectural finishing.",
+    address: "Banana Island, Lagos",
+    images: 10,
+  },
+  {
+    id: 4,
+    title: "Serviced 2 Bedroom Apartment",
+    location: "Victoria Island, Lagos",
+    agent: "Grace Adeyemi",
+    price: "₦250,000 / night",
+    category: "Shortlet",
+    type: "Serviced Apartment",
+    bedrooms: 2,
+    bathrooms: 2,
+    size: "120 sqm",
+    date: "20 Nov 2026",
+    status: "Rejected",
+    description:
+      "A serviced shortlet apartment with modern furniture and essential guest amenities.",
+    address: "Victoria Island, Lagos",
+    images: 5,
+  },
+  {
+    id: 5,
+    title: "Commercial Office Space",
+    location: "Yaba, Lagos",
+    agent: "David Okafor",
+    price: "₦12,000,000 / year",
+    category: "Lease",
+    type: "Commercial Property",
+    bedrooms: 0,
+    bathrooms: 2,
+    size: "300 sqm",
+    date: "19 Nov 2026",
+    status: "Pending",
+    description:
+      "A commercial office space suitable for business operations in a central business district.",
+    address: "Yaba, Lagos",
+    images: 4,
+  },
+];
+
+const navigation = [
+  { name: "Overview", path: "/admin", icon: FiGrid },
+  { name: "Agent Applications", path: "/admin/agents", icon: FiUsers },
+  { name: "Properties", path: "/admin/properties", icon: FiHome },
+  { name: "Inspections", path: "/admin/inspections", icon: FiClipboard },
+  { name: "Users", path: "/admin/users", icon: FiUsers },
+  { name: "Enquiries", path: "/admin/enquiries", icon: FiMessageSquare },
+  { name: "Support Tickets", path: "/admin/support", icon: FiLifeBuoy },
+  { name: "Settings", path: "/admin/settings", icon: FiSettings },
+];
+
+function AdminProperties() {
+  const location = useLocation();
+
+  const [properties, setProperties] = useState<Property[]>(initialProperties);
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [search, setSearch] = useState("");
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(
+    null,
   );
-  const [bedrooms, setBedrooms] = useState("");
-  const [bathrooms, setBathrooms] = useState("");
-  const [area, setArea] = useState("");
-  const [description, setDescription] = useState("");
-  const [images, setImages] = useState<string[]>([]);
-  const [coverImageIndex, setCoverImageIndex] = useState(0);
-  const [features, setFeatures] = useState<string[]>([""]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notice, setNotice] = useState("");
 
-  function handleFeatureChange(index: number, value: string) {
-    setFeatures((currentFeatures) =>
-      currentFeatures.map((feature, featureIndex) =>
-        featureIndex === index ? value : feature,
+  const pendingCount = properties.filter(
+    (property) => property.status === "Pending",
+  ).length;
+
+  const approvedCount = properties.filter(
+    (property) => property.status === "Approved",
+  ).length;
+
+  const rejectedCount = properties.filter(
+    (property) => property.status === "Rejected",
+  ).length;
+
+  const filteredProperties = properties.filter((property) => {
+    const matchesFilter =
+      activeFilter === "All" || property.status === activeFilter;
+
+    const searchText = search.toLowerCase();
+
+    const matchesSearch =
+      property.title.toLowerCase().includes(searchText) ||
+      property.location.toLowerCase().includes(searchText) ||
+      property.agent.toLowerCase().includes(searchText) ||
+      property.category.toLowerCase().includes(searchText);
+
+    return matchesFilter && matchesSearch;
+  });
+
+  const updatePropertyStatus = (id: number, status: PropertyStatus) => {
+    setProperties((current) =>
+      current.map((property) =>
+        property.id === id ? { ...property, status } : property,
       ),
     );
-  }
 
-  function addFeature() {
-    setFeatures((currentFeatures) => [...currentFeatures, ""]);
-  }
+    setSelectedProperty(null);
 
-  function removeFeature(index: number) {
-    setFeatures((currentFeatures) =>
-      currentFeatures.filter((_, featureIndex) => featureIndex !== index),
+    setNotice(
+      status === "Approved"
+        ? "Property listing approved."
+        : "Property listing rejected.",
     );
-  }
+  };
 
-  async function uploadImage(file: File): Promise<string> {
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      throw new Error(
-        `Could not verify your Supabase session: ${sessionError.message}`,
-      );
+  const statusStyle = (status: PropertyStatus) => {
+    if (status === "Approved") {
+      return "bg-(--dh-success)/10 text-(--dh-success)";
     }
 
-    if (!session) {
-      throw new Error(
-        "You are not signed in to Supabase. Please log in again.",
-      );
+    if (status === "Rejected") {
+      return "bg-(--dh-danger)/10 text-(--dh-danger)";
     }
 
-    const fileExtension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const filePath = `properties/${crypto.randomUUID()}.${fileExtension}`;
-
-    const { error } = await supabase.storage
-      .from("property-images")
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        contentType: file.type,
-        upsert: false,
-      });
-
-    if (error) {
-      throw new Error(`Could not upload ${file.name}: ${error.message}`);
-    }
-
-    const { data } = supabase.storage
-      .from("property-images")
-      .getPublicUrl(filePath);
-
-    if (!data.publicUrl) {
-      throw new Error(`Could not get a public URL for ${file.name}.`);
-    }
-
-    return data.publicUrl;
-  }
-
-  async function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
-    const input = e.currentTarget;
-    const selectedFiles = Array.from(input.files ?? []);
-    input.value = "";
-
-    if (selectedFiles.length === 0) return;
-
-    const invalidFile = selectedFiles.find(
-      (file) => !file.type.startsWith("image/"),
-    );
-
-    if (invalidFile) {
-      alert("Please select image files only.");
-      return;
-    }
-
-    const oversizedFile = selectedFiles.find(
-      (file) => file.size > 10 * 1024 * 1024,
-    );
-
-    if (oversizedFile) {
-      alert(
-        `Each image must be 10 MB or smaller. "${oversizedFile.name}" is too large.`,
-      );
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      const uploadedImages = await Promise.all(selectedFiles.map(uploadImage));
-
-      setImages((currentImages) => [...currentImages, ...uploadedImages]);
-    } catch (error) {
-      console.error("Supabase image upload error:", error);
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "The images could not be uploaded. Please try again.",
-      );
-    } finally {
-      setIsUploading(false);
-    }
-  }
-
-  function removeImage(index: number) {
-    setImages((currentImages) =>
-      currentImages.filter((_, imageIndex) => imageIndex !== index),
-    );
-
-    setCoverImageIndex((currentIndex) => {
-      if (images.length <= 1) return 0;
-
-      if (currentIndex === index) {
-        return index === images.length - 1 ? index - 1 : index;
-      }
-
-      if (currentIndex > index) return currentIndex - 1;
-
-      return currentIndex;
-    });
-  }
-
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    if (isUploading || isSaving) {
-      alert("Please wait for the current operation to finish.");
-      return;
-    }
-
-    if (images.length === 0) {
-      alert("Please upload at least one property image.");
-      return;
-    }
-
-    if (!title.trim() || !location.trim() || !price.trim()) {
-      alert("Please complete the required property information.");
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        throw new Error(
-          `Could not verify your Supabase session: ${sessionError.message}`,
-        );
-      }
-
-      if (!session) {
-        throw new Error(
-          "Your session has expired. Please log in again before saving.",
-        );
-      }
-
-      const coverImage = images[coverImageIndex] ?? images[0];
-
-      const propertyData = {
-        title: title.trim(),
-        location: location.trim(),
-        price: price.trim(),
-        type,
-        purpose,
-        bedrooms: Number(bedrooms) || 0,
-        bathrooms: Number(bathrooms) || 0,
-        area: area.trim(),
-        image: coverImage,
-        images: [...images],
-        description: description.trim(),
-        features: features
-          .map((feature) => feature.trim())
-          .filter((feature) => feature !== ""),
-      };
-
-      const { data: savedProperty, error: saveError } = await supabase
-        .from("properties")
-        .insert(propertyData)
-        .select()
-        .single();
-
-      if (saveError) {
-        console.error("Supabase property insert error:", saveError);
-
-        throw new Error(
-          `Could not save property to the database: ${saveError.message}`,
-        );
-      }
-
-      if (!savedProperty) {
-        throw new Error(
-          "Supabase did not return the saved property. Please check the database.",
-        );
-      }
-
-      addProperty(savedProperty as Property);
-
-      alert("Property added successfully!");
-      navigate("/admin");
-    } catch (error) {
-      console.error("Error saving property:", error);
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "The property could not be saved. Please try again.",
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  const inputClass =
-    "mt-2 w-full rounded-xl border border-[#303238] bg-[#111315] px-4 py-3 text-[#F5F5F3] outline-none transition placeholder:text-[#777B82] focus:border-[#D6AD55] focus:ring-2 focus:ring-[#D6AD55]/10";
-
-  const labelClass = "text-sm font-semibold text-[#F5F5F3]";
-
-  const sectionClass =
-    "rounded-2xl border border-[#303238] bg-[#1B1D20] p-6 shadow-xl shadow-black/10 sm:p-8";
+    return "bg-(--dh-gold)/10 text-(--dh-gold)";
+  };
 
   return (
-    <div className="min-h-screen bg-[#111315] text-[#F5F5F3]">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-[#303238] bg-[#111315]/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-5 py-5 md:px-8">
-          <Link
-            to="/admin"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#303238] bg-[#242629] text-[#D6AD55] transition hover:border-[#D6AD55] hover:bg-[#2C2F33]"
-            aria-label="Back to dashboard"
-          >
-            <FiArrowLeft size={20} />
-          </Link>
+    <div className="min-h-screen bg-(--dh-bg) text-(--dh-white)">
+      <Navbar />
 
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
-              Property Management
-            </p>
-            <h1 className="mt-1 text-xl font-bold text-[#F5F5F3] sm:text-2xl">
-              Add Property
-            </h1>
-            <p className="mt-1 hidden text-sm text-[#A6A8AD] sm:block">
-              Add a new property listing to DitiHomes.
-            </p>
+      <div className="flex min-h-screen pt-20">
+        {/* Sidebar */}
+        <aside
+          className={`fixed bottom-0 left-0 top-20 z-40 w-72 border-r border-(--dh-border) bg-(--dh-bg-secondary) transition-transform duration-300 lg:translate-x-0 ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <div className="flex h-full flex-col px-5 py-7">
+            <div className="mb-8 px-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-(--dh-muted)">
+                Administration
+              </p>
+              <h2 className="mt-2 text-xl font-bold">Control Centre</h2>
+            </div>
+
+            <nav className="flex-1 space-y-2">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                const active = location.pathname === item.path;
+
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
+                      active
+                        ? "bg-(--dh-gold) text-black"
+                        : "text-(--dh-muted) hover:bg-(--dh-surface-hover) hover:text-(--dh-white)"
+                    }`}
+                  >
+                    <Icon size={18} />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="rounded-2xl border border-(--dh-border) bg-(--dh-surface) p-4">
+              <p className="text-sm font-semibold">Property Moderation</p>
+              <p className="mt-1 text-xs leading-5 text-(--dh-muted)">
+                Review every listing before it becomes publicly visible.
+              </p>
+            </div>
           </div>
-        </div>
-      </header>
+        </aside>
 
-      <main className="mx-auto max-w-5xl px-5 py-10 md:px-8">
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Information */}
-          <section className={sectionClass}>
-            <div className="border-b border-[#303238] pb-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
-                Step 01
-              </p>
-              <h2 className="mt-2 text-xl font-bold text-[#F5F5F3]">
-                Basic Information
-              </h2>
-              <p className="mt-1 text-sm text-[#A6A8AD]">
-                Enter the main information about the property.
-              </p>
-            </div>
+        {sidebarOpen && (
+          <button
+            type="button"
+            aria-label="Close sidebar"
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 top-20 z-30 bg-black/50 lg:hidden"
+          />
+        )}
 
-            <div className="mt-6 grid gap-5 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <label htmlFor="title" className={labelClass}>
-                  Property Title *
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Modern 4 Bedroom Duplex"
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="location" className={labelClass}>
-                  Location *
-                </label>
-                <input
-                  id="location"
-                  type="text"
-                  required
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g. Lekki Phase 1, Lagos"
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="price" className={labelClass}>
-                  Price *
-                </label>
-                <input
-                  id="price"
-                  type="text"
-                  required
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="e.g. ₦85,000,000"
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="type" className={labelClass}>
-                  Property Type
-                </label>
-                <p className="mt-1 text-xs text-[#777B82]">
-                  What type of property are you uploading?
-                </p>
-                <select
-                  id="type"
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className={inputClass}
+        {/* Main content */}
+        <main className="min-w-0 flex-1 lg:ml-72">
+          <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-10">
+            {/* Header */}
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="rounded-lg border border-(--dh-border) p-2 lg:hidden"
+                  aria-label="Toggle sidebar"
                 >
-                  <option>Apartment</option>
-                  <option>House</option>
-                  <option>Duplex</option>
-                  <option>Land</option>
-                  <option>Office</option>
-                  <option>Shop</option>
-                </select>
+                  <FiHome size={20} />
+                </button>
+
+                <div>
+                  <p className="text-sm text-(--dh-muted)">
+                    Administration / Properties
+                  </p>
+                  <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
+                    Property Management
+                  </h1>
+                  <p className="mt-2 text-sm text-(--dh-muted)">
+                    Review, verify and manage property listings.
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <label htmlFor="purpose" className={labelClass}>
-                  Listing Purpose
-                </label>
-                <p className="mt-1 text-xs text-[#777B82]">
-                  Where should this property appear on DitiHomes?
-                </p>
-                <select
-                  id="purpose"
-                  required
-                  value={purpose}
-                  onChange={(e) =>
-                    setPurpose(
-                      e.target.value as "For Sale" | "For Rent" | "Shortlet",
-                    )
-                  }
-                  className={inputClass}
+              <div className="flex items-center gap-2 rounded-xl border border-(--dh-border) bg-(--dh-surface) px-4 py-3">
+                <FiShield className="text-(--dh-gold)" />
+                <span className="text-xs font-semibold">
+                  Listing Review Centre
+                </span>
+              </div>
+            </div>
+
+            {/* Notice */}
+            {notice && (
+              <div className="mb-6 flex items-center justify-between rounded-xl border border-(--dh-success)/30 bg-(--dh-success)/10 px-4 py-3 text-sm text-(--dh-success)">
+                {notice}
+                <button
+                  type="button"
+                  onClick={() => setNotice("")}
+                  aria-label="Dismiss notification"
                 >
-                  <option value="For Sale">For Sale</option>
-                  <option value="For Rent">For Rent</option>
-                  <option value="Shortlet">Shortlet</option>
-                </select>
+                  <FiX size={18} />
+                </button>
+              </div>
+            )}
+
+            {/* Statistics */}
+            <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+              {[
+                {
+                  title: "Pending Reviews",
+                  value: pendingCount,
+                  icon: FiAlertCircle,
+                  color: "text-(--dh-gold)",
+                },
+                {
+                  title: "Approved Listings",
+                  value: approvedCount,
+                  icon: FiCheck,
+                  color: "text-(--dh-success)",
+                },
+                {
+                  title: "Rejected Listings",
+                  value: rejectedCount,
+                  icon: FiX,
+                  color: "text-(--dh-danger)",
+                },
+              ].map((stat) => {
+                const Icon = stat.icon;
+
+                return (
+                  <div
+                    key={stat.title}
+                    className="rounded-2xl border border-(--dh-border) bg-(--dh-surface) p-5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-(--dh-muted)">{stat.title}</p>
+                      <Icon size={20} className={stat.color} />
+                    </div>
+                    <h2 className="mt-5 text-3xl font-bold">{stat.value}</h2>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Listing filters */}
+            <section className="overflow-hidden rounded-2xl border border-(--dh-border) bg-(--dh-surface)">
+              <div className="border-b border-(--dh-border) p-5 sm:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2 className="font-bold">Property Listings</h2>
+                    <p className="mt-1 text-xs text-(--dh-muted)">
+                      Review property information before publication.
+                    </p>
+                  </div>
+
+                  <div className="relative w-full sm:w-72">
+                    <FiSearch
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-(--dh-muted)"
+                      size={17}
+                    />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                      placeholder="Search properties..."
+                      className="w-full rounded-xl border border-(--dh-border) bg-(--dh-bg-secondary) py-3 pl-10 pr-4 text-sm outline-none transition focus:border-(--dh-gold)"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {["All", "Pending", "Approved", "Rejected"].map((filter) => (
+                    <button
+                      key={filter}
+                      type="button"
+                      onClick={() => setActiveFilter(filter)}
+                      className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${
+                        activeFilter === filter
+                          ? "bg-(--dh-gold) text-black"
+                          : "border border-(--dh-border) text-(--dh-muted) hover:text-(--dh-white)"
+                      }`}
+                    >
+                      {filter}
+                      {filter === "Pending" && ` (${pendingCount})`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Property table */}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-212.5 text-left text-sm">
+                  <thead className="bg-(--dh-bg-secondary) text-xs text-(--dh-muted)">
+                    <tr>
+                      <th className="px-6 py-4 font-medium">Property</th>
+                      <th className="px-6 py-4 font-medium">Agent</th>
+                      <th className="px-6 py-4 font-medium">Category</th>
+                      <th className="px-6 py-4 font-medium">Price</th>
+                      <th className="px-6 py-4 font-medium">Status</th>
+                      <th className="px-6 py-4 font-medium">Action</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {filteredProperties.map((property) => (
+                      <tr
+                        key={property.id}
+                        className="border-t border-(--dh-border)"
+                      >
+                        <td className="px-6 py-5">
+                          <p className="font-semibold">{property.title}</p>
+                          <p className="mt-1 flex items-center gap-1 text-xs text-(--dh-muted)">
+                            <FiMapPin size={12} />
+                            {property.location}
+                          </p>
+                        </td>
+
+                        <td className="px-6 py-5">{property.agent}</td>
+
+                        <td className="px-6 py-5">
+                          <span className="rounded-lg bg-(--dh-bg-secondary) px-3 py-1 text-xs">
+                            {property.category}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5 font-medium">
+                          {property.price}
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span
+                            className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${statusStyle(property.status)}`}
+                          >
+                            {property.status}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedProperty(property)}
+                            className="flex items-center gap-2 rounded-lg border border-(--dh-border) px-3 py-2 text-xs font-semibold transition hover:border-(--dh-gold) hover:text-(--dh-gold)"
+                          >
+                            <FiEye size={15} />
+                            Review
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {filteredProperties.length === 0 && (
+                  <div className="px-6 py-16 text-center">
+                    <FiHome size={28} className="mx-auto text-(--dh-muted)" />
+                    <p className="mt-4 font-semibold">No properties found</p>
+                    <p className="mt-1 text-sm text-(--dh-muted)">
+                      Try another search or status filter.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* Review policy */}
+            <div className="mt-6 rounded-xl border border-(--dh-gold)/20 bg-(--dh-gold)/5 p-4">
+              <div className="flex items-start gap-3">
+                <FiShield className="mt-1 shrink-0 text-(--dh-gold)" />
+                <div>
+                  <p className="text-sm font-semibold">
+                    Property verification policy
+                  </p>
+                  <p className="mt-1 text-xs leading-6 text-(--dh-muted)">
+                    Each property must be reviewed independently. Check
+                    ownership or listing authority, property details, images and
+                    location information. Do not publish a listing until its
+                    review is complete. Keep exact property addresses private on
+                    public listings.
+                  </p>
+                </div>
               </div>
             </div>
+          </div>
 
-            <div className="mt-6 rounded-xl border border-[#D6AD55]/20 bg-[#D6AD55]/6 p-4">
-              <p className="text-sm font-semibold text-[#D6AD55]">
-                Listing destination
-              </p>
-              <p className="mt-1 text-sm leading-6 text-[#A6A8AD]">
-                This property will automatically appear under{" "}
-                <span className="font-semibold text-[#E5C477]">{purpose}</span>{" "}
-                when customers browse DitiHomes.
-              </p>
-            </div>
-          </section>
+          {/* Footer now stays within the main content area */}
+          <Footer />
+        </main>
+      </div>
 
-          {/* Property Details */}
-          <section className={sectionClass}>
-            <div className="border-b border-[#303238] pb-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
-                Step 02
-              </p>
-              <h2 className="mt-2 text-xl font-bold text-[#F5F5F3]">
-                Property Details
-              </h2>
-              <p className="mt-1 text-sm text-[#A6A8AD]">
-                Add the size and accommodation details.
-              </p>
-            </div>
-
-            <div className="mt-6 grid gap-5 sm:grid-cols-3">
+      {/* Property review modal */}
+      {selectedProperty && (
+        <div
+          className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-black/70 p-4"
+          onClick={() => setSelectedProperty(null)}
+        >
+          <div
+            className="my-auto w-full max-w-2xl rounded-2xl border border-(--dh-border) bg-(--dh-bg-secondary) p-6 sm:p-8"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <label htmlFor="bedrooms" className={labelClass}>
-                  Bedrooms
-                </label>
-                <input
-                  id="bedrooms"
-                  type="number"
-                  min="0"
-                  value={bedrooms}
-                  onChange={(e) => setBedrooms(e.target.value)}
-                  placeholder="4"
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="bathrooms" className={labelClass}>
-                  Bathrooms
-                </label>
-                <input
-                  id="bathrooms"
-                  type="number"
-                  min="0"
-                  value={bathrooms}
-                  onChange={(e) => setBathrooms(e.target.value)}
-                  placeholder="4"
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="area" className={labelClass}>
-                  Area
-                </label>
-                <input
-                  id="area"
-                  type="text"
-                  value={area}
-                  onChange={(e) => setArea(e.target.value)}
-                  placeholder="450 sqm"
-                  className={inputClass}
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Description */}
-          <section className={sectionClass}>
-            <div className="border-b border-[#303238] pb-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
-                Step 03
-              </p>
-              <h2 className="mt-2 text-xl font-bold text-[#F5F5F3]">
-                Property Description
-              </h2>
-              <p className="mt-1 text-sm text-[#A6A8AD]">
-                Give customers a clear picture of what the property offers.
-              </p>
-            </div>
-
-            <textarea
-              required
-              rows={6}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the property..."
-              className={`${inputClass} mt-6 resize-none`}
-            />
-          </section>
-
-          {/* Features */}
-          <section className={sectionClass}>
-            <div className="flex flex-col gap-3 border-b border-[#303238] pb-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
-                  Step 04
+                <p className="text-xs font-semibold uppercase tracking-wider text-(--dh-gold)">
+                  Property listing review
                 </p>
-                <h2 className="mt-2 text-xl font-bold text-[#F5F5F3]">
-                  Property Features
+                <h2 className="mt-2 text-xl font-bold">
+                  {selectedProperty.title}
                 </h2>
-                <p className="mt-1 text-sm text-[#A6A8AD]">
-                  Add the features customers should know about.
+                <p className="mt-1 flex items-center gap-1 text-sm text-(--dh-muted)">
+                  <FiMapPin size={14} />
+                  {selectedProperty.location}
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={addFeature}
-                className="w-fit rounded-xl border border-[#D6AD55]/30 bg-[#D6AD55]/10 px-4 py-2.5 text-sm font-semibold text-[#D6AD55] transition hover:bg-[#D6AD55]/20"
+                onClick={() => setSelectedProperty(null)}
+                className="rounded-lg border border-(--dh-border) p-2"
+                aria-label="Close review"
               >
-                + Add Feature
+                <FiX size={19} />
               </button>
             </div>
 
-            <div className="mt-6 space-y-3">
-              {features.map((feature, index) => (
-                <div key={index} className="flex gap-3">
-                  <input
-                    type="text"
-                    value={feature}
-                    onChange={(e) => handleFeatureChange(index, e.target.value)}
-                    placeholder="e.g. 24/7 Security"
-                    className={`${inputClass} mt-0 min-w-0 flex-1`}
-                  />
-
-                  {features.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeFeature(index)}
-                      className="flex h-12 shrink-0 items-center gap-2 rounded-xl border border-red-500/20 px-3 text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
-                    >
-                      <FiX size={17} />
-                      <span className="hidden sm:inline">Remove</span>
-                    </button>
-                  )}
+            <div className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {[
+                ["Listing agent", selectedProperty.agent],
+                ["Category", selectedProperty.category],
+                ["Property type", selectedProperty.type],
+                ["Price", selectedProperty.price],
+                ["Public location", selectedProperty.location],
+                ["Submitted", selectedProperty.date],
+                ["Property size", selectedProperty.size],
+                ["Submitted images", `${selectedProperty.images} images`],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="rounded-xl border border-(--dh-border) bg-(--dh-surface) p-4"
+                >
+                  <p className="text-xs text-(--dh-muted)">{label}</p>
+                  <p className="mt-2 wrap-break-words text-sm font-semibold">
+                    {value}
+                  </p>
                 </div>
               ))}
             </div>
-          </section>
 
-          {/* Property Images */}
-          <section className={sectionClass}>
-            <div className="border-b border-[#303238] pb-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6AD55]">
-                Step 05
-              </p>
-              <h2 className="mt-2 text-xl font-bold text-[#F5F5F3]">
-                Property Images
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-[#A6A8AD]">
-                Upload the exterior, living room, bedrooms, kitchen, bathrooms
-                and other parts of the property.
+            <div className="mt-5 grid grid-cols-3 gap-3">
+              <div className="rounded-xl border border-(--dh-border) bg-(--dh-surface) p-3">
+                <FiHome className="text-(--dh-gold)" size={18} />
+                <p className="mt-2 text-lg font-bold">
+                  {selectedProperty.bedrooms}
+                </p>
+                <p className="text-xs text-(--dh-muted)">Bedrooms</p>
+              </div>
+
+              <div className="rounded-xl border border-(--dh-border) bg-(--dh-surface) p-3">
+                <FiHome className="text-(--dh-gold)" size={18} />
+                <p className="mt-2 text-lg font-bold">
+                  {selectedProperty.bathrooms}
+                </p>
+                <p className="text-xs text-(--dh-muted)">Bathrooms</p>
+              </div>
+
+              <div className="rounded-xl border border-(--dh-border) bg-(--dh-surface) p-3">
+                <FiMaximize2 className="text-(--dh-gold)" size={18} />
+                <p className="mt-2 text-lg font-bold">
+                  {selectedProperty.size}
+                </p>
+                <p className="text-xs text-(--dh-muted)">Property size</p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-(--dh-border) bg-(--dh-surface) p-4">
+              <h3 className="text-sm font-semibold">Property description</h3>
+              <p className="mt-2 text-sm leading-6 text-(--dh-muted)">
+                {selectedProperty.description}
               </p>
             </div>
 
-            <label className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#D6AD55]/30 bg-[#111315] px-6 py-10 text-center transition hover:border-[#D6AD55] hover:bg-[#242629]">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#D6AD55]/20 bg-[#D6AD55]/10 text-[#D6AD55]">
-                <FiUpload size={25} />
-              </div>
-
-              <p className="mt-5 font-semibold text-[#F5F5F3]">
-                {isUploading ? "Uploading images..." : "Select property images"}
-              </p>
-
-              <p className="mt-2 text-sm text-[#A6A8AD]">
-                Choose multiple PNG, JPG or WebP images
-              </p>
-
-              <p className="mt-2 text-xs text-[#777B82]">
-                Maximum 10 MB per image. Select this area again to add more
-                photos.
-              </p>
-
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                disabled={isUploading || isSaving}
-                onChange={handleImageChange}
-                className="hidden"
-              />
-            </label>
-
-            {isUploading && (
-              <div className="mt-5 rounded-xl border border-[#D6AD55]/20 bg-[#D6AD55]/6 p-4">
-                <p className="text-sm font-medium text-[#E5C477]">
-                  Uploading your images to Supabase Storage. Please wait...
-                </p>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#303238]">
-                  <div className="h-full w-1/2 animate-pulse rounded-full bg-[#D6AD55]" />
+            <div className="mt-5 rounded-xl border border-(--dh-gold)/20 bg-(--dh-gold)/5 p-4">
+              <div className="flex items-start gap-3">
+                <FiAlertCircle className="mt-1 shrink-0 text-(--dh-gold)" />
+                <div>
+                  <p className="text-sm font-semibold">Verification reminder</p>
+                  <p className="mt-1 text-xs leading-5 text-(--dh-muted)">
+                    Confirm the agent's authority to list this property and
+                    verify the property information before approval. Exact
+                    street addresses should not be exposed publicly.
+                  </p>
                 </div>
               </div>
-            )}
+            </div>
 
-            {images.length > 0 ? (
-              <div className="mt-8">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h3 className="font-bold text-[#F5F5F3]">
-                      Uploaded Images ({images.length})
-                    </h3>
-                    <p className="mt-1 text-sm text-[#A6A8AD]">
-                      Select an image to make it the main cover photo.
-                    </p>
-                  </div>
+            <div className="mt-8 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  updatePropertyStatus(selectedProperty.id, "Rejected")
+                }
+                className="flex items-center gap-2 rounded-xl border border-(--dh-danger)/40 px-5 py-3 text-sm font-semibold text-(--dh-danger) transition hover:bg-(--dh-danger)/10"
+              >
+                <FiX size={17} />
+                Reject Listing
+              </button>
 
-                  <span className="w-fit rounded-full border border-[#D6AD55]/20 bg-[#D6AD55]/10 px-3 py-1 text-xs font-semibold text-[#D6AD55]">
-                    {images.length} {images.length === 1 ? "photo" : "photos"}
-                  </span>
-                </div>
-
-                <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                  {images.map((imageUrl, index) => (
-                    <div
-                      key={imageUrl}
-                      className={`overflow-hidden rounded-2xl border-2 bg-[#111315] transition ${
-                        coverImageIndex === index
-                          ? "border-[#D6AD55] shadow-lg shadow-[#D6AD55]/10"
-                          : "border-[#303238]"
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setCoverImageIndex(index)}
-                        className="relative block w-full text-left"
-                        aria-label={`Set image ${index + 1} as cover photo`}
-                        aria-pressed={coverImageIndex === index}
-                      >
-                        <img
-                          src={imageUrl}
-                          alt={`Property photo ${index + 1}`}
-                          className="h-36 w-full object-cover sm:h-40"
-                        />
-
-                        {coverImageIndex === index ? (
-                          <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-[#D6AD55] px-2 py-2 text-xs font-bold text-[#111315]">
-                            <FiStar size={14} />
-                            Main Cover Photo
-                          </span>
-                        ) : (
-                          <span className="absolute bottom-2 left-2 rounded-lg bg-black/75 px-2 py-1 text-xs font-medium text-white">
-                            Photo {index + 1}
-                          </span>
-                        )}
-                      </button>
-
-                      <div className="flex items-center justify-between gap-2 p-3">
-                        <span className="truncate text-xs text-[#A6A8AD]">
-                          Image {index + 1}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-400 transition hover:bg-red-500/10"
-                          aria-label={`Remove image ${index + 1}`}
-                        >
-                          <FiX size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/6 p-4">
-                <FiImage className="mt-0.5 shrink-0 text-[#D6AD55]" size={20} />
-                <p className="text-sm leading-6 text-[#A6A8AD]">
-                  At least one image is required. Your first uploaded image will
-                  be the cover photo unless you select another.
-                </p>
-              </div>
-            )}
-          </section>
-
-          {/* Form Actions */}
-          <div className="flex flex-col-reverse gap-3 border-t border-[#303238] pt-6 sm:flex-row sm:justify-end">
-            <Link
-              to="/admin"
-              className="rounded-xl border border-[#303238] bg-[#242629] px-6 py-3.5 text-center font-semibold text-[#F5F5F3] transition hover:border-[#D6AD55] hover:text-[#D6AD55]"
-            >
-              Cancel
-            </Link>
-
-            <button
-              type="submit"
-              disabled={isUploading || isSaving}
-              className="flex items-center justify-center gap-2 rounded-xl bg-[#D6AD55] px-6 py-3.5 font-bold text-[#111315] transition hover:bg-[#E5C477] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isSaving ? <FiCheckCircle size={18} /> : <FiSave size={18} />}
-
-              {isUploading
-                ? "Uploading Images..."
-                : isSaving
-                  ? "Saving Property..."
-                  : "Save Property"}
-            </button>
+              <button
+                type="button"
+                onClick={() =>
+                  updatePropertyStatus(selectedProperty.id, "Approved")
+                }
+                className="flex items-center gap-2 rounded-xl bg-(--dh-gold) px-5 py-3 text-sm font-semibold text-black transition hover:opacity-90"
+              >
+                <FiCheck size={17} />
+                Approve Listing
+              </button>
+            </div>
           </div>
-        </form>
-      </main>
+        </div>
+      )}
     </div>
   );
 }
 
-export default AddProperty;
+export default AdminProperties;

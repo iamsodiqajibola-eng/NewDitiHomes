@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { KeyboardEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FiChevronRight,
@@ -13,6 +14,7 @@ import {
 import { useProperties } from "../context/PropertyContext";
 import type { Property } from "../data/properties";
 import { supabase } from "../lib/supabase";
+import ThemeToggle from "./ThemeToggle";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -22,7 +24,6 @@ function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -34,6 +35,18 @@ function Navbar() {
   const desktopSearchRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const accountMenuRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const navLinkClass =
+    "text-sm font-medium text-(--dh-white) transition-colors duration-200 hover:text-(--dh-gold)";
+
+  const controlClass =
+    "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-(--dh-border) bg-(--dh-surface) text-(--dh-white) transition hover:border-(--dh-gold) hover:text-(--dh-gold)";
+
+  const searchContainerClass =
+    "flex h-11 items-center rounded-xl border border-(--dh-border) bg-(--dh-surface) px-3 transition focus-within:border-(--dh-gold)";
+
+  const inputClass =
+    "w-full min-w-0 bg-transparent text-sm text-(--dh-white) outline-none placeholder:text-(--dh-muted)";
 
   // Check the current session and listen for authentication changes.
   useEffect(() => {
@@ -125,7 +138,6 @@ function Navbar() {
       const target = event.target as Node;
 
       const clickedDesktopSearch = desktopSearchRef.current?.contains(target);
-
       const clickedMobileSearch = mobileSearchRef.current?.contains(target);
 
       const clickedAccountMenu = accountMenuRefs.current.some((menu) =>
@@ -312,7 +324,7 @@ function Navbar() {
     setShowSearch(true);
   }
 
-  function handleSearchKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  function handleSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Escape") {
       setShowSearch(false);
       return;
@@ -332,14 +344,11 @@ function Navbar() {
     return `/properties?purpose=${encodeURIComponent(purpose)}`;
   }
 
-  const navLinkClass =
-    "text-sm font-medium text-[#E6E6E3] transition-colors duration-200 hover:text-[#D6AD55]";
-
   // Shared account menu for desktop and mobile.
   function AccountMenu({ menuIndex }: { menuIndex: number }) {
     if (isAuthLoading) {
       return (
-        <div className="h-11 w-11 animate-pulse rounded-xl border border-[#41444A] bg-[#242629]" />
+        <div className="h-11 w-11 animate-pulse rounded-xl border border-(--dh-border) bg-(--dh-surface)" />
       );
     }
 
@@ -358,27 +367,27 @@ function Navbar() {
           aria-haspopup="true"
           className={`flex h-11 w-11 items-center justify-center rounded-xl border transition ${
             isAccountMenuOpen
-              ? "border-[#D6AD55] bg-[#D6AD55]/10 text-[#D6AD55]"
-              : "border-[#41444A] bg-[#242629] text-[#F5F5F3] hover:border-[#D6AD55] hover:text-[#D6AD55]"
+              ? "border-(--dh-gold) bg-(--dh-gold)/10 text-(--dh-gold)"
+              : "border-(--dh-border) bg-(--dh-surface) text-(--dh-white) hover:border-(--dh-gold) hover:text-(--dh-gold)"
           }`}
         >
           <FiUser size={20} />
         </button>
 
         {isAccountMenuOpen && (
-          <div className="absolute right-0 top-[calc(100%+12px)] z-120 w-64 overflow-hidden rounded-2xl border border-[#41444A] bg-[#1B1D20] shadow-2xl shadow-black/40">
+          <div className="absolute right-0 top-[calc(100%+12px)] z-120 w-64 overflow-hidden rounded-2xl border border-(--dh-border) bg-(--dh-bg-secondary) shadow-2xl shadow-black/20">
             {isLoggedIn ? (
               <>
-                <div className="border-b border-[#303238] px-4 py-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-[#A6A8AD]">
+                <div className="border-b border-(--dh-border) px-4 py-4">
+                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-(--dh-muted)">
                     My Account
                   </p>
 
-                  <p className="mt-2 truncate text-sm font-semibold text-[#F5F5F3]">
+                  <p className="mt-2 truncate text-sm font-semibold text-(--dh-white)">
                     {userEmail || "Signed in"}
                   </p>
 
-                  <span className="mt-2 inline-flex rounded-full bg-[#D6AD55]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#D6AD55]">
+                  <span className="mt-2 inline-flex rounded-full bg-(--dh-gold)/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-(--dh-gold)">
                     {userRole === "admin" ? "Administrator" : "Customer"}
                   </span>
                 </div>
@@ -387,7 +396,7 @@ function Navbar() {
                   <Link
                     to="/profile"
                     onClick={() => setIsAccountMenuOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[#E6E6E3] transition hover:bg-[#242629] hover:text-[#D6AD55]"
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-(--dh-white) transition hover:bg-(--dh-surface-hover) hover:text-(--dh-gold)"
                   >
                     <FiUser size={17} />
                     My Profile
@@ -397,20 +406,20 @@ function Navbar() {
                     <Link
                       to="/admin"
                       onClick={() => setIsAccountMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[#D6AD55] transition hover:bg-[#242629]"
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-(--dh-gold) transition hover:bg-(--dh-surface-hover)"
                     >
                       <FiGrid size={17} />
                       Admin Dashboard
                     </Link>
                   )}
 
-                  <div className="my-2 border-t border-[#303238]" />
+                  <div className="my-2 border-t border-(--dh-border)" />
 
                   <button
                     type="button"
                     onClick={handleLogout}
                     disabled={isLoggingOut}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-red-400 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-red-500 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <FiLogOut size={17} />
                     {isLoggingOut ? "Logging out..." : "Logout"}
@@ -419,12 +428,12 @@ function Navbar() {
               </>
             ) : (
               <>
-                <div className="border-b border-[#303238] px-4 py-4">
-                  <p className="text-sm font-bold text-[#F5F5F3]">
+                <div className="border-b border-(--dh-border) px-4 py-4">
+                  <p className="text-sm font-bold text-(--dh-white)">
                     Welcome to DitiHomes
                   </p>
 
-                  <p className="mt-1 text-xs leading-relaxed text-[#A6A8AD]">
+                  <p className="mt-1 text-xs leading-relaxed text-(--dh-muted)">
                     Sign in or create an account to get started.
                   </p>
                 </div>
@@ -433,7 +442,7 @@ function Navbar() {
                   <Link
                     to="/login"
                     onClick={() => setIsAccountMenuOpen(false)}
-                    className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[#41444A] px-4 text-sm font-semibold text-[#F5F5F3] transition hover:border-[#D6AD55] hover:text-[#D6AD55]"
+                    className="flex h-11 items-center justify-center gap-2 rounded-xl border border-(--dh-border) px-4 text-sm font-semibold text-(--dh-white) transition hover:border-(--dh-gold) hover:text-(--dh-gold)"
                   >
                     <FiUser size={17} />
                     Login
@@ -442,7 +451,7 @@ function Navbar() {
                   <Link
                     to="/signup"
                     onClick={() => setIsAccountMenuOpen(false)}
-                    className="flex h-11 items-center justify-center rounded-xl bg-[#D6AD55] px-4 text-sm font-bold text-[#111315] transition hover:bg-[#E5C477]"
+                    className="flex h-11 items-center justify-center rounded-xl bg-(--dh-gold) px-4 text-sm font-bold text-[#111315] transition hover:bg-(--dh-gold-light)"
                   >
                     Create Account
                   </Link>
@@ -457,7 +466,7 @@ function Navbar() {
 
   return (
     <header className="absolute left-0 top-0 z-50 w-full">
-      <nav className="border-b border-white/8 bg-[#111315]/90 shadow-lg shadow-black/10 backdrop-blur-xl">
+      <nav className="border-b border-(--dh-border) bg-(--dh-bg-secondary)/95 shadow-lg shadow-black/5 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:px-5 sm:py-4 md:px-8">
           {/* Logo */}
           <Link
@@ -465,7 +474,7 @@ function Navbar() {
             className="shrink-0 text-xl font-bold tracking-tight sm:text-3xl"
           >
             <span className="text-[#60A5FA]">Diti</span>
-            <span className="text-[#D6AD55]">Homes</span>
+            <span className="text-(--dh-gold)">Homes</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -498,8 +507,11 @@ function Navbar() {
           {/* Desktop Right Side */}
           <div className="hidden items-center gap-3 lg:flex">
             <div ref={desktopSearchRef} className="relative">
-              <div className="flex h-11 w-64 items-center rounded-xl border border-[#41444A] bg-[#242629] px-3 transition focus-within:border-[#D6AD55] xl:w-72">
-                <FiSearch className="mr-2 shrink-0 text-[#D6AD55]" size={19} />
+              <div className={`${searchContainerClass} w-64 xl:w-72`}>
+                <FiSearch
+                  className="mr-2 shrink-0 text-(--dh-gold)"
+                  size={19}
+                />
 
                 <input
                   type="text"
@@ -512,7 +524,7 @@ function Navbar() {
                   onKeyDown={handleSearchKeyDown}
                   placeholder="Search properties..."
                   aria-label="Search properties"
-                  className="w-full min-w-0 bg-transparent text-sm text-[#F5F5F3] outline-none placeholder:text-[#858990]"
+                  className={inputClass}
                 />
 
                 {search && (
@@ -522,7 +534,7 @@ function Navbar() {
                       setSearch("");
                       setShowSearch(true);
                     }}
-                    className="shrink-0 text-[#A6A8AD] transition hover:text-white"
+                    className="shrink-0 text-(--dh-muted) transition hover:text-(--dh-white)"
                     aria-label="Clear search"
                   >
                     <FiX size={17} />
@@ -547,15 +559,18 @@ function Navbar() {
               )}
             </div>
 
+            <ThemeToggle />
             <AccountMenu menuIndex={0} />
           </div>
 
           {/* Mobile Controls */}
           <div className="flex min-w-0 max-w-65 flex-1 items-center justify-end gap-2 lg:hidden">
             <div ref={mobileSearchRef} className="relative min-w-0 flex-1">
-              <div className="flex h-10 w-full items-center rounded-xl border border-[#41444A] bg-[#242629] px-2 transition focus-within:border-[#D6AD55] sm:px-3">
+              <div
+                className={`${searchContainerClass} h-10 w-full px-2 sm:px-3`}
+              >
                 <FiSearch
-                  className="mr-1.5 shrink-0 text-[#D6AD55] sm:mr-2"
+                  className="mr-1.5 shrink-0 text-(--dh-gold) sm:mr-2"
                   size={18}
                 />
 
@@ -570,7 +585,7 @@ function Navbar() {
                   onKeyDown={handleSearchKeyDown}
                   placeholder="Search..."
                   aria-label="Search properties"
-                  className="w-full min-w-0 bg-transparent text-base text-[#F5F5F3] outline-none placeholder:text-[#858990] sm:text-sm"
+                  className="w-full min-w-0 bg-transparent text-base text-(--dh-white) outline-none placeholder:text-(--dh-muted) sm:text-sm"
                 />
 
                 {search && (
@@ -580,7 +595,7 @@ function Navbar() {
                       setSearch("");
                       setShowSearch(true);
                     }}
-                    className="ml-1 shrink-0 text-[#A6A8AD] hover:text-white"
+                    className="ml-1 shrink-0 text-(--dh-muted) hover:text-(--dh-white)"
                     aria-label="Clear search"
                   >
                     <FiX size={16} />
@@ -606,13 +621,14 @@ function Navbar() {
               )}
             </div>
 
-            {/* Profile icon and mobile menu */}
+            <ThemeToggle className="h-10 w-10" />
+
             <AccountMenu menuIndex={1} />
 
             <button
               type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#41444A] bg-[#242629] text-[#D6AD55] transition hover:border-[#D6AD55]"
+              className={controlClass}
               aria-label={isMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={isMenuOpen}
             >
@@ -623,7 +639,7 @@ function Navbar() {
 
         {/* Mobile Navigation Menu */}
         {isMenuOpen && (
-          <div className="border-t border-white/8 bg-[#17191C]/98 px-5 py-5 backdrop-blur-xl lg:hidden">
+          <div className="border-t border-(--dh-border) bg-(--dh-bg-secondary) px-5 py-5 backdrop-blur-xl lg:hidden">
             <div className="mx-auto max-w-7xl">
               <div className="flex flex-col">
                 {[
@@ -637,7 +653,7 @@ function Navbar() {
                   <Link
                     key={item.label}
                     to={item.to}
-                    className="border-b border-white/[0.07] py-4 text-sm font-medium text-[#E6E6E3] transition hover:text-[#D6AD55]"
+                    className="border-b border-(--dh-border) py-4 text-sm font-medium text-(--dh-white) transition hover:text-(--dh-gold)"
                   >
                     {item.label}
                   </Link>
@@ -671,14 +687,14 @@ function SearchDropdown({
   mobile = false,
 }: SearchDropdownProps) {
   const panelClass = mobile
-    ? "fixed left-3 right-3 top-[calc(env(safe-area-inset-top)+110px)] z-[100] mx-auto max-h-[calc(100dvh-140px)] w-auto max-w-[420px] translate-x-0 overflow-hidden rounded-2xl border border-[#41444A] bg-[#1B1D20] shadow-2xl shadow-black/50"
-    : "absolute left-0 right-0 top-[calc(100%+10px)] z-[100] overflow-hidden rounded-2xl border border-[#41444A] bg-[#1B1D20] shadow-2xl shadow-black/50";
+    ? "fixed left-3 right-3 top-[calc(env(safe-area-inset-top)+110px)] z-[100] mx-auto max-h-[calc(100dvh-140px)] w-auto max-w-[420px] translate-x-0 overflow-hidden rounded-2xl border border-(--dh-border) bg-(--dh-bg-secondary) shadow-2xl shadow-black/20"
+    : "absolute left-0 right-0 top-[calc(100%+10px)] z-[100] overflow-hidden rounded-2xl border border-(--dh-border) bg-(--dh-bg-secondary) shadow-2xl shadow-black/20";
 
   return (
     <div className={panelClass}>
       {!search.trim() ? (
         <div className="p-4">
-          <p className="px-1 text-xs font-bold uppercase tracking-[0.15em] text-[#A6A8AD]">
+          <p className="px-1 text-xs font-bold uppercase tracking-[0.15em] text-(--dh-muted)">
             Popular Searches
           </p>
 
@@ -688,7 +704,7 @@ function SearchDropdown({
                 key={item}
                 type="button"
                 onClick={() => onPopularSearch(item)}
-                className="rounded-full border border-[#41444A] bg-[#242629] px-3 py-2 text-xs font-semibold text-[#E6E6E3] transition hover:border-[#D6AD55] hover:text-[#D6AD55]"
+                className="rounded-full border border-(--dh-border) bg-(--dh-surface) px-3 py-2 text-xs font-semibold text-(--dh-white) transition hover:border-(--dh-gold) hover:text-(--dh-gold)"
               >
                 {item}
               </button>
@@ -697,8 +713,8 @@ function SearchDropdown({
         </div>
       ) : matchingProperties.length > 0 ? (
         <div>
-          <div className="border-b border-[#303238] px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#A6A8AD]">
+          <div className="border-b border-(--dh-border) px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--dh-muted)">
               Properties
             </p>
           </div>
@@ -709,7 +725,7 @@ function SearchDropdown({
                 key={property.id}
                 type="button"
                 onClick={() => onPropertyClick(property.id)}
-                className="flex w-full items-center gap-3 border-b border-[#303238] p-3 text-left transition hover:bg-[#242629]"
+                className="flex w-full items-center gap-3 border-b border-(--dh-border) p-3 text-left transition hover:bg-(--dh-surface-hover)"
               >
                 <img
                   src={property.image}
@@ -718,32 +734,35 @@ function SearchDropdown({
                 />
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-[#F5F5F3]">
+                  <p className="truncate text-sm font-bold text-(--dh-white)">
                     {property.title}
                   </p>
 
-                  <p className="mt-1 truncate text-xs text-[#A6A8AD]">
+                  <p className="mt-1 truncate text-xs text-(--dh-muted)">
                     {property.location}
                   </p>
 
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[#D6AD55]/15 px-2 py-1 text-[10px] font-semibold text-[#D6AD55]">
+                    <span className="rounded-full bg-(--dh-gold)/15 px-2 py-1 text-[10px] font-semibold text-(--dh-gold)">
                       {property.purpose}
                     </span>
 
                     {property.bedrooms > 0 && (
-                      <span className="text-[10px] text-[#A6A8AD]">
+                      <span className="text-[10px] text-(--dh-muted)">
                         {property.bedrooms} bed
                       </span>
                     )}
 
-                    <span className="text-[10px] font-semibold text-[#E5C477]">
+                    <span className="text-[10px] font-semibold text-(--dh-gold)">
                       {property.price}
                     </span>
                   </div>
                 </div>
 
-                <FiChevronRight className="shrink-0 text-[#A6A8AD]" size={18} />
+                <FiChevronRight
+                  className="shrink-0 text-(--dh-muted)"
+                  size={18}
+                />
               </button>
             ))}
           </div>
@@ -751,7 +770,7 @@ function SearchDropdown({
           <button
             type="button"
             onClick={onViewAll}
-            className="flex w-full items-center justify-center border-t border-[#303238] px-4 py-3 text-xs font-bold text-[#D6AD55] transition hover:bg-[#242629]"
+            className="flex w-full items-center justify-center border-t border-(--dh-border) px-4 py-3 text-xs font-bold text-(--dh-gold) transition hover:bg-(--dh-surface-hover)"
           >
             View all results
             <FiChevronRight size={15} className="ml-1" />
@@ -759,22 +778,22 @@ function SearchDropdown({
         </div>
       ) : (
         <div className="px-5 py-8 text-center">
-          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#242629] text-[#D6AD55]">
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-(--dh-surface) text-(--dh-gold)">
             <FiSearch size={20} />
           </div>
 
-          <p className="mt-3 text-sm font-semibold text-[#F5F5F3]">
+          <p className="mt-3 text-sm font-semibold text-(--dh-white)">
             No properties found
           </p>
 
-          <p className="mt-1 text-xs text-[#A6A8AD]">
+          <p className="mt-1 text-xs text-(--dh-muted)">
             Try a location, property type, bedroom count or purpose.
           </p>
 
           <button
             type="button"
             onClick={onViewAll}
-            className="mt-4 text-xs font-semibold text-[#D6AD55] hover:text-[#E5C477]"
+            className="mt-4 text-xs font-semibold text-(--dh-gold) hover:opacity-80"
           >
             Search all listings
           </button>

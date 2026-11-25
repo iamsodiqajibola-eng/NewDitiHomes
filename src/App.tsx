@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 
 import { supabase } from "./lib/supabase";
+import { ThemeProvider } from "./context/ThemeContext";
 
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -18,10 +19,25 @@ import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
+import AgentDashboard from "./agent/AgentDashboard";
+import AgentProperties from "./agent/AgentProperties";
+import AgentAddProperty from "./agent/AgentAddProperty";
+import AgentInspections from "./agent/AgentInspections";
+import AgentEnquiries from "./agent/AgentEnquiries";
+import AgentCustomers from "./agent/AgentCustomers";
+import AgentSettings from "./agent/AgentSettings";
+import AgentSupport from "./agent/AgentSupport";
 
 import AdminDashboard from "./admin/AdminDashboard";
+import AdminAgents from "./admin/AdminAgents";
+import AdminProperties from "./admin/AdminProperties";
 import AddProperty from "./admin/AddPropert";
 import EditProperty from "./admin/EditProperty";
+import AdminInspections from "./admin/AdminInspections";
+import AdminUsers from "./admin/AdminUsers";
+import AdminEnquiries from "./admin/AdminEnquiries";
+import AdminSupport from "./admin/AdminSupport";
+import AdminSettings from "./admin/AdminSettings";
 
 /* Scroll to the top whenever navigation occurs */
 function ScrollToTop() {
@@ -177,61 +193,199 @@ function AccessRoute({ children, requireAdmin = false }: AccessRouteProps) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
+    <ThemeProvider>
+      <BrowserRouter>
+        <ScrollToTop />
 
-      <Routes>
-        {/* Public pages */}
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/properties" element={<Properties />} />
-        <Route path="/properties/:id" element={<PropertyDetails />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Routes>
+          {/* Public pages */}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/properties" element={<Properties />} />
+          <Route path="/properties/:id" element={<PropertyDetails />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
-        {/* Signed-in user pages */}
-        <Route
-          path="/profile"
-          element={
-            <AccessRoute>
-              <Profile />
-            </AccessRoute>
-          }
-        />
+          {/* Signed-in user pages */}
+          <Route
+            path="/profile"
+            element={
+              <AccessRoute>
+                <Profile />
+              </AccessRoute>
+            }
+          />
 
-        {/* Administrator-only pages */}
-        <Route
-          path="/admin"
-          element={
-            <AccessRoute requireAdmin>
-              <AdminDashboard />
-            </AccessRoute>
-          }
-        />
+          {/* Agent Dashboard */}
+          <Route
+            path="/agent"
+            element={
+              <AccessRoute>
+                <AgentDashboard />
+              </AccessRoute>
+            }
+          />
 
-        <Route
-          path="/admin/add-property"
-          element={
-            <AccessRoute requireAdmin>
-              <AddProperty />
-            </AccessRoute>
-          }
-        />
+          <Route
+            path="/agent/properties"
+            element={
+              <AccessRoute>
+                <AgentProperties />
+              </AccessRoute>
+            }
+          />
 
-        <Route
-          path="/admin/edit-property/:id"
-          element={
-            <AccessRoute requireAdmin>
-              <EditProperty />
-            </AccessRoute>
-          }
-        />
+          <Route
+            path="/agent/properties/add"
+            element={
+              <AccessRoute>
+                <AgentAddProperty />
+              </AccessRoute>
+            }
+          />
 
-        {/* Unknown routes */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+          <Route
+            path="/agent/inspections"
+            element={
+              <AccessRoute>
+                <AgentInspections />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/agent/enquiries"
+            element={
+              <AccessRoute>
+                <AgentEnquiries />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/agent/customers"
+            element={
+              <AccessRoute>
+                <AgentCustomers />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/agent/settings"
+            element={
+              <AccessRoute>
+                <AgentSettings />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/agent/support"
+            element={
+              <AccessRoute>
+                <AgentSupport />
+              </AccessRoute>
+            }
+          />
+
+          {/* Administrator-only pages */}
+          <Route
+            path="/admin"
+            element={
+              <AccessRoute>
+                <AdminDashboard />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/admin/agents"
+            element={
+              <AccessRoute>
+                <AdminAgents />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/admin/properties"
+            element={
+              <AccessRoute>
+                <AdminProperties />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/admin/inspections"
+            element={
+              <AccessRoute>
+                <AdminInspections />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/admin/add-property"
+            element={
+              <AccessRoute requireAdmin>
+                <AddProperty />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/admin/edit-property/:id"
+            element={
+              <AccessRoute requireAdmin>
+                <EditProperty />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/admin/users"
+            element={
+              <AccessRoute>
+                <AdminUsers />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/admin/enquiries"
+            element={
+              <AccessRoute>
+                <AdminEnquiries />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/admin/support"
+            element={
+              <AccessRoute>
+                <AdminSupport />
+              </AccessRoute>
+            }
+          />
+
+          <Route
+            path="/admin/settings"
+            element={
+              <AccessRoute>
+                <AdminSettings />
+              </AccessRoute>
+            }
+          />
+
+          {/* Unknown routes */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

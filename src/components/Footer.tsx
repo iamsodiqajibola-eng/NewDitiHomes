@@ -29,7 +29,7 @@ const footerLinks = [
 
 function Footer() {
   return (
-    <footer className="relative overflow-hidden border-t border-[#303238] bg-[#111315] text-[#F5F5F3]">
+    <footer className="relative overflow-hidden border-t border-(--dh-border) bg-(--dh-bg) text-(--dh-white) transition-colors duration-300">
       {/* Subtle background glow */}
       <div className="pointer-events-none absolute -right-40 top-0 h-96 w-96 rounded-full bg-[#D6AD55]/4 blur-[120px]" />
 
@@ -44,10 +44,10 @@ function Footer() {
               className="inline-block text-3xl font-bold tracking-tight"
             >
               <span className="text-[#60A5FA]">Diti</span>
-              <span className="text-[#D6AD55]">Homes</span>
+              <span className="text-(--dh-gold)">Homes</span>
             </Link>
 
-            <p className="mt-5 max-w-sm text-sm leading-7 text-[#A6A8AD]">
+            <p className="mt-5 max-w-sm text-sm leading-7 text-(--dh-muted)">
               Discover beautiful homes, trusted properties, and spaces that feel
               right. DitiHomes makes finding your next home simpler.
             </p>
@@ -59,7 +59,7 @@ function Footer() {
                 aria-label="Facebook page coming soon"
                 title="Facebook page coming soon"
                 aria-disabled="true"
-                className="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-full border border-[#303238] bg-[#1B1D20] text-[#777B82]"
+                className="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-full border border-(--dh-border) bg-(--dh-bg-secondary) text-(--dh-muted)"
               >
                 <FiFacebook size={18} />
               </span>
@@ -71,7 +71,7 @@ function Footer() {
                 rel="noopener noreferrer"
                 aria-label="Visit DitiHomes on Instagram"
                 title="Instagram"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#303238] bg-[#1B1D20] text-[#A6A8AD] transition-all duration-200 hover:border-[#D6AD55] hover:bg-[#D6AD55] hover:text-[#111315]"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-(--dh-border) bg-(--dh-bg-secondary) text-(--dh-muted) transition-all duration-200 hover:border-(--dh-gold) hover:bg-(--dh-gold) hover:text-[#111315]"
               >
                 <FiInstagram size={18} />
               </a>
@@ -83,13 +83,13 @@ function Footer() {
                 rel="noopener noreferrer"
                 aria-label="Visit DitiHomes on X"
                 title="X"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#303238] bg-[#1B1D20] text-[#A6A8AD] transition-all duration-200 hover:border-[#D6AD55] hover:bg-[#D6AD55] hover:text-[#111315]"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-(--dh-border) bg-(--dh-bg-secondary) text-(--dh-muted) transition-all duration-200 hover:border-(--dh-gold) hover:bg-(--dh-gold) hover:text-[#111315]"
               >
                 <FiTwitter size={18} />
               </a>
             </div>
 
-            <p className="mt-3 text-xs text-[#777B82]">
+            <p className="mt-3 text-xs text-(--dh-muted)">
               Follow us on social media.
             </p>
           </div>
@@ -97,7 +97,7 @@ function Footer() {
           {/* Navigation Links */}
           {footerLinks.map((section) => (
             <div key={section.title}>
-              <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-[#F5F5F3]">
+              <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-(--dh-white)">
                 {section.title}
               </h3>
 
@@ -106,7 +106,7 @@ function Footer() {
                   <li key={link.name}>
                     <Link
                       to={link.path}
-                      className="text-sm text-[#A6A8AD] transition-colors duration-200 hover:text-[#D6AD55]"
+                      className="text-sm text-(--dh-muted) transition-colors duration-200 hover:text-(--dh-gold)"
                     >
                       {link.name}
                     </Link>
@@ -118,7 +118,7 @@ function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-[#F5F5F3]">
+            <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-(--dh-white)">
               Get in touch
             </h3>
 
@@ -126,20 +126,20 @@ function Footer() {
               {/* Location */}
               <div className="flex items-start gap-3">
                 <FiMapPin
-                  className="mt-0.5 shrink-0 text-[#D6AD55]"
+                  className="mt-0.5 shrink-0 text-(--dh-gold)"
                   size={18}
                 />
-                <p className="text-sm leading-6 text-[#A6A8AD]">
+                <p className="text-sm leading-6 text-(--dh-muted)">
                   Lagos, Nigeria
                 </p>
               </div>
 
               {/* Phone */}
               <div className="flex items-center gap-3">
-                <FiPhone className="shrink-0 text-[#D6AD55]" size={18} />
+                <FiPhone className="shrink-0 text-(--dh-gold)" size={18} />
                 <a
                   href="tel:+2348142676421"
-                  className="text-sm text-[#A6A8AD] transition-colors hover:text-[#D6AD55]"
+                  className="text-sm text-(--dh-muted) transition-colors hover:text-(--dh-gold)"
                 >
                   +234 814 267 6421
                 </a>
@@ -147,12 +147,12 @@ function Footer() {
 
               {/* WhatsApp */}
               <div className="flex items-center gap-3">
-                <FiPhone className="shrink-0 text-[#D6AD55]" size={18} />
+                <FiPhone className="shrink-0 text-(--dh-gold)" size={18} />
                 <a
                   href="https://wa.me/2348142676421"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-[#A6A8AD] transition-colors hover:text-[#D6AD55]"
+                  className="text-sm text-(--dh-muted) transition-colors hover:text-(--dh-gold)"
                 >
                   WhatsApp Us
                 </a>
@@ -160,10 +160,13 @@ function Footer() {
 
               {/* Email */}
               <div className="flex items-start gap-3">
-                <FiMail className="mt-0.5 shrink-0 text-[#D6AD55]" size={18} />
+                <FiMail
+                  className="mt-0.5 shrink-0 text-(--dh-gold)"
+                  size={18}
+                />
                 <a
                   href="mailto:Ditihomespropertiesltd@gmail.com"
-                  className="break-all text-sm leading-6 text-[#A6A8AD] transition-colors hover:text-[#D6AD55]"
+                  className="break-all text-sm leading-6 text-(--dh-muted) transition-colors hover:text-(--dh-gold)"
                 >
                   Ditihomespropertiesltd@gmail.com
                 </a>
@@ -174,13 +177,13 @@ function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="relative border-t border-[#303238] bg-[#0D0F10]">
+      <div className="relative border-t border-(--dh-border) bg-(--dh-bg-secondary)">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-6 text-center sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
-          <p className="text-xs text-[#777B82] sm:text-sm">
+          <p className="text-xs text-(--dh-muted) sm:text-sm">
             © {new Date().getFullYear()} DitiHomes. All rights reserved.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-5 text-xs text-[#777B82] sm:text-sm">
+          <div className="flex flex-wrap justify-center gap-5 text-xs text-(--dh-muted) sm:text-sm">
             <span>Privacy Policy · Coming soon</span>
             <span>Terms & Conditions · Coming soon</span>
           </div>

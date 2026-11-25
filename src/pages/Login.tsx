@@ -58,29 +58,29 @@ function Login() {
   }
 
   return (
-    <div className="dh-page">
+    <div className="dh-page min-h-screen">
       <Navbar />
 
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#111315] px-5 pb-16 pt-32">
-        <div className="pointer-events-none absolute -right-32 -top-20 h-96 w-96 rounded-full bg-[#D6AD55]/10 blur-[120px]" />
-        <div className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-[#D6AD55]/5 blur-[120px]" />
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-(--dh-bg) px-5 pb-16 pt-32 transition-colors duration-300">
+        <div className="pointer-events-none absolute -right-32 -top-20 h-96 w-96 rounded-full bg-(--dh-gold)/10 blur-[120px]" />
+        <div className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-(--dh-gold)/5 blur-[120px]" />
 
         <div className="relative w-full max-w-lg">
-          <div className="rounded-3xl border border-[#303238] bg-[#1B1D20] p-6 shadow-2xl shadow-black/30 sm:p-10">
+          <div className="rounded-3xl border border-(--dh-border) bg-(--dh-surface) p-6 shadow-2xl shadow-black/10 transition-colors duration-300 sm:p-10">
             <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#D6AD55]/20 bg-[#D6AD55]/10">
-                <FiLock size={27} className="text-[#D6AD55]" />
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-(--dh-gold)/20 bg-(--dh-gold)/10">
+                <FiLock size={27} className="text-(--dh-gold)" />
               </div>
 
-              <p className="mt-7 text-sm font-semibold uppercase tracking-[0.2em] text-[#D6AD55]">
+              <p className="mt-7 text-sm font-semibold uppercase tracking-[0.2em] text-(--dh-gold)">
                 Welcome Back
               </p>
 
-              <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#F5F5F3]">
+              <h1 className="mt-3 text-3xl font-bold tracking-tight text-(--dh-white)">
                 Login to DitiHomes
               </h1>
 
-              <p className="mt-3 text-sm leading-6 text-[#A6A8AD]">
+              <p className="mt-3 text-sm leading-6 text-(--dh-muted)">
                 Sign in to access your account.
               </p>
             </div>
@@ -89,7 +89,7 @@ function Login() {
               <div>
                 <label
                   htmlFor="email"
-                  className="text-sm font-semibold text-[#F5F5F3]"
+                  className="text-sm font-semibold text-(--dh-white)"
                 >
                   Email Address
                 </label>
@@ -97,7 +97,7 @@ function Login() {
                 <div className="relative mt-2">
                   <FiMail
                     size={18}
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#A6A8AD]"
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-(--dh-muted)"
                   />
 
                   <input
@@ -117,7 +117,7 @@ function Login() {
               <div>
                 <label
                   htmlFor="password"
-                  className="text-sm font-semibold text-[#F5F5F3]"
+                  className="text-sm font-semibold text-(--dh-white)"
                 >
                   Password
                 </label>
@@ -125,7 +125,7 @@ function Login() {
                 <div className="relative mt-2">
                   <FiLock
                     size={18}
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#A6A8AD]"
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-(--dh-muted)"
                   />
 
                   <input
@@ -148,7 +148,7 @@ function Login() {
                       showPassword ? "Hide password" : "Show password"
                     }
                     aria-pressed={showPassword}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#A6A8AD] transition hover:text-[#D6AD55] focus:outline-none focus-visible:text-[#D6AD55]"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-(--dh-muted) transition hover:text-(--dh-gold) focus:outline-none focus-visible:text-(--dh-gold)"
                   >
                     {showPassword ? (
                       <FiEyeOff size={19} />
@@ -162,7 +162,7 @@ function Login() {
               {errorMessage && (
                 <div
                   role="alert"
-                  className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400"
+                  className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-500"
                 >
                   <FiAlertCircle className="mt-0.5 shrink-0" size={18} />
                   <p>{errorMessage}</p>
@@ -179,11 +179,11 @@ function Login() {
               </button>
             </form>
 
-            <p className="mt-8 text-center text-sm text-[#A6A8AD]">
+            <p className="mt-8 text-center text-sm text-(--dh-muted)">
               Don't have an account?{" "}
               <Link
                 to="/signup"
-                className="font-semibold text-[#D6AD55] transition hover:text-[#E5C477]"
+                className="font-semibold text-(--dh-gold) transition hover:opacity-75"
               >
                 Create one
               </Link>

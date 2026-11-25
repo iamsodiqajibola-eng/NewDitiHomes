@@ -31,7 +31,7 @@ function FeaturedProperties({
   const featuredProperties = filteredProperties.slice(0, 3);
 
   return (
-    <section className="relative overflow-hidden bg-[#111315] py-20 sm:py-24">
+    <section className="relative overflow-hidden bg-(--dh-bg) py-20 transition-colors duration-300 sm:py-24">
       {/* Subtle gold background glow */}
       <div className="pointer-events-none absolute -right-40 top-0 h-96 w-96 rounded-full bg-[#D6AD55]/6 blur-[120px]" />
 
@@ -39,15 +39,15 @@ function FeaturedProperties({
         {/* Section Heading */}
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D6AD55] sm:text-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-(--dh-gold) sm:text-sm">
               Explore properties
             </p>
 
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#F5F5F3] sm:text-4xl lg:text-5xl">
-              Featured <span className="text-[#D6AD55]">Properties</span>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-(--dh-white) sm:text-4xl lg:text-5xl">
+              Featured <span className="text-(--dh-gold)">Properties</span>
             </h2>
 
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-[#A6A8AD] sm:text-base">
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-(--dh-muted) sm:text-base">
               Explore our selection of available properties and discover a space
               that feels right for you.
             </p>
@@ -56,7 +56,7 @@ function FeaturedProperties({
           <button
             type="button"
             onClick={onViewAll}
-            className="group flex w-fit items-center gap-2 text-sm font-semibold text-[#F5F5F3] transition-colors hover:text-[#D6AD55]"
+            className="group flex w-fit items-center gap-2 text-sm font-semibold text-(--dh-white) transition-colors hover:text-(--dh-gold)"
           >
             View all properties
             <span className="transition-transform duration-200 group-hover:translate-x-1">
@@ -73,15 +73,15 @@ function FeaturedProperties({
             ))}
           </div>
         ) : (
-          <div className="mt-10 rounded-2xl border border-[#303238] bg-[#1B1D20] px-6 py-16 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#D6AD55]/20 bg-[#D6AD55]/10">
+          <div className="mt-10 rounded-2xl border border-(--dh-border) bg-(--dh-bg-secondary) px-6 py-16 text-center transition-colors duration-300">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-(--dh-gold)/20 bg-(--dh-gold)/10">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="25"
                 height="25"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#D6AD55"
+                stroke="var(--dh-gold)"
                 strokeWidth="1.7"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -91,11 +91,11 @@ function FeaturedProperties({
               </svg>
             </div>
 
-            <h3 className="mt-5 text-xl font-bold text-[#F5F5F3]">
+            <h3 className="mt-5 text-xl font-bold text-(--dh-white)">
               No properties found
             </h3>
 
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#A6A8AD]">
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-(--dh-muted)">
               We couldn't find properties matching your search. Try adjusting
               your location, property type, or purpose.
             </p>
@@ -103,7 +103,7 @@ function FeaturedProperties({
             <button
               type="button"
               onClick={onViewAll}
-              className="mt-6 rounded-xl bg-[#D6AD55] px-6 py-3 text-sm font-bold text-[#111315] transition hover:bg-[#E5C477]"
+              className="mt-6 rounded-xl bg-(--dh-gold) px-6 py-3 text-sm font-bold text-[#111315] transition hover:brightness-110"
             >
               View all properties
             </button>
