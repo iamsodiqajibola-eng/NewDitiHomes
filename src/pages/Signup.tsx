@@ -37,15 +37,22 @@ function Signup() {
       return;
     }
 
+    if (!fullName.trim()) {
+      setErrorMessage("Please enter your full name.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/login`,
           data: {
             full_name: fullName.trim(),
+            account_type: "customer",
           },
         },
       });
@@ -57,15 +64,17 @@ function Signup() {
 
       if (data.session) {
         setSuccessMessage("Your account has been created successfully.");
+
         navigate("/login", { replace: true });
         return;
       }
 
       setSuccessMessage(
-        "Account created. Check your email for a confirmation link before logging in.",
+        "Your account has been created! We've sent a verification email to your inbox. Please verify your email address before logging in.",
       );
     } catch (error) {
       console.error("Signup error:", error);
+
       setErrorMessage(
         "Something went wrong while creating your account. Please try again.",
       );
@@ -75,11 +84,12 @@ function Signup() {
   }
 
   return (
-    <div className="dh-page min-h-screen">
+    <div className="dh-page flex min-h-screen flex-col">
       <Navbar />
 
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-(--dh-bg) px-5 pb-16 pt-32 transition-colors duration-300">
+      <main className="relative flex flex-1 items-center justify-center overflow-hidden bg-(--dh-bg) px-5 pb-16 pt-32 transition-colors duration-300">
         <div className="pointer-events-none absolute -right-32 -top-20 h-96 w-96 rounded-full bg-(--dh-gold)/10 blur-[120px]" />
+
         <div className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-(--dh-gold)/5 blur-[120px]" />
 
         <div className="relative w-full max-w-md">
@@ -235,6 +245,7 @@ function Signup() {
                 className="dh-button-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isLoading ? "Creating account..." : "Create Account"}
+
                 {!isLoading && <FiArrowRight size={18} />}
               </button>
             </form>

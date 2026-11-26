@@ -1,5 +1,16 @@
+export type PropertyAgent = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  agency_name: string | null;
+  phone: string | null;
+  is_verified: boolean;
+};
+
 export type Property = {
   id: number;
+  agent_id?: string | null;
+  agent?: PropertyAgent | null;
   title: string;
   location: string;
 

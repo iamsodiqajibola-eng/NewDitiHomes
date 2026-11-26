@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 
-import type { Property } from "../data/properties";
+import type { Property, PropertyAgent } from "../data/properties";
 import { supabase } from "../lib/supabase";
 
 type DatabaseProperty = Property & {
@@ -46,6 +46,50 @@ function removeDatabaseFields(row: DatabaseProperty): Property {
   return property;
 }
 
+async function attachAgentDetails(
+  propertyRows: DatabaseProperty[],
+): Promise<Property[]> {
+  const agentIds = [
+    ...new Set(
+      propertyRows
+        .map((property) => property.agent_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  const agentResults = await Promise.all(
+    agentIds.map(async (agentId) => {
+      const { data, error } = await supabase.rpc("get_public_property_agent", {
+        p_agent_id: agentId,
+      });
+
+      if (error) {
+        console.error(
+          `Unable to retrieve agent information for ${agentId}:`,
+          error,
+        );
+
+        return [agentId, null] as const;
+      }
+
+      const agent = (data?.[0] ?? null) as PropertyAgent | null;
+
+      return [agentId, agent] as const;
+    }),
+  );
+
+  const agentMap = new Map<string, PropertyAgent | null>(agentResults);
+
+  return propertyRows.map((row) => {
+    const property = removeDatabaseFields(row);
+
+    return {
+      ...property,
+      agent: row.agent_id ? (agentMap.get(row.agent_id) ?? null) : null,
+    };
+  });
+}
+
 function PropertyProvider({ children }: PropertyProviderProps) {
   const [properties, setProperties] = useState<Property[]>([]);
   const [deletedProperties, setDeletedProperties] = useState<Property[]>([]);
@@ -73,14 +117,15 @@ function PropertyProvider({ children }: PropertyProviderProps) {
 
       const rows = (data ?? []) as DatabaseProperty[];
 
-      setProperties(
-        rows.filter((row) => !row.is_deleted).map(removeDatabaseFields),
-      );
+      const activeRows = rows.filter((row) => !row.is_deleted);
+      const deletedRows = rows.filter((row) => row.is_deleted);
+
+      const propertiesWithAgents = await attachAgentDetails(activeRows);
+
+      setProperties(propertiesWithAgents);
 
       setDeletedProperties(
-        session
-          ? rows.filter((row) => row.is_deleted).map(removeDatabaseFields)
-          : [],
+        session ? deletedRows.map(removeDatabaseFields) : [],
       );
     } catch (error) {
       console.error("Unable to load properties from Supabase:", error);

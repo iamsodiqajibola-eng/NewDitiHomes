@@ -30,7 +30,7 @@ function Login() {
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         password,
       });
 
@@ -39,12 +39,35 @@ function Login() {
         return;
       }
 
-      if (!data.session) {
+      if (!data.session || !data.user) {
         setErrorMessage("Login could not be completed. Please try again.");
         return;
       }
 
-      // Every successfully authenticated user returns to the homepage.
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        await supabase.auth.signOut();
+
+        setErrorMessage(
+          "We couldn't verify your account type. Please contact support.",
+        );
+        return;
+      }
+
+      if (profile.role !== "user") {
+        await supabase.auth.signOut();
+
+        setErrorMessage(
+          "This account cannot use customer login. Please use the correct login portal.",
+        );
+        return;
+      }
+
       navigate("/", { replace: true });
     } catch (error) {
       console.error("Login error:", error);
@@ -58,10 +81,10 @@ function Login() {
   }
 
   return (
-    <div className="dh-page min-h-screen">
+    <div className="dh-page flex min-h-screen flex-col">
       <Navbar />
 
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-(--dh-bg) px-5 pb-16 pt-32 transition-colors duration-300">
+      <main className="relative flex flex-1 items-center justify-center overflow-hidden bg-(--dh-bg) px-5 pb-16 pt-32 transition-colors duration-300">
         <div className="pointer-events-none absolute -right-32 -top-20 h-96 w-96 rounded-full bg-(--dh-gold)/10 blur-[120px]" />
         <div className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-(--dh-gold)/5 blur-[120px]" />
 
@@ -81,7 +104,7 @@ function Login() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-(--dh-muted)">
-                Sign in to access your account.
+                Sign in to access your customer account.
               </p>
             </div>
 

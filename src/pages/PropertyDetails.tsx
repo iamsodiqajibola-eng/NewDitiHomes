@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   FiArrowLeft,
   FiCheckCircle,
@@ -16,22 +16,33 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiMaximize2,
+  FiHeart,
 } from "react-icons/fi";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import PropertyMap from "../components/PropertyMap";
+
 import { useProperties } from "../context/PropertyContext";
+import { supabase } from "../lib/supabase";
 
 const DITI_HOMES_PHONE = "+2348142676421";
 
 function PropertyDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { properties } = useProperties();
 
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showFullGallery, setShowFullGallery] = useState(false);
+
+  // Favourite states
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [favoriteMessage, setFavoriteMessage] = useState("");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const property = properties.find((item) => item.id === Number(id));
 
@@ -53,6 +64,97 @@ function PropertyDetails() {
     setShowFullGallery(false);
     setShowShareOptions(false);
   }, [id]);
+
+  // Load the current user's favourite status
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadFavoriteStatus() {
+      setIsFavorite(false);
+      setFavoriteMessage("");
+      setCurrentUserId(null);
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (!isMounted) return;
+
+      if (authError || !user) {
+        return;
+      }
+
+      setCurrentUserId(user.id);
+
+      const { data, error } = await supabase
+        .from("property_favorites")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("property_id", Number(id))
+        .maybeSingle();
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error("Unable to load favorite status:", error);
+        return;
+      }
+
+      setIsFavorite(Boolean(data));
+    }
+
+    void loadFavoriteStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  // Save or remove a favourite
+  async function handleToggleFavorite() {
+    if (favoriteLoading || !property) return;
+
+    if (!currentUserId) {
+      navigate("/login");
+      return;
+    }
+
+    setFavoriteLoading(true);
+    setFavoriteMessage("");
+
+    try {
+      if (isFavorite) {
+        const { error } = await supabase
+          .from("property_favorites")
+          .delete()
+          .eq("user_id", currentUserId)
+          .eq("property_id", property.id);
+
+        if (error) throw error;
+
+        setIsFavorite(false);
+        setFavoriteMessage("Property removed from your saved properties.");
+      } else {
+        const { error } = await supabase.from("property_favorites").insert({
+          user_id: currentUserId,
+          property_id: property.id,
+        });
+
+        if (error) throw error;
+
+        setIsFavorite(true);
+        setFavoriteMessage("Property saved successfully.");
+      }
+    } catch (error) {
+      console.error("Unable to update favorite:", error);
+      setFavoriteMessage(
+        "Unable to update your saved properties. Please try again.",
+      );
+    } finally {
+      setFavoriteLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!showFullGallery) return;
@@ -121,6 +223,20 @@ function PropertyDetails() {
 
   const currentProperty = property;
   const propertyUrl = window.location.href;
+
+  // Round coordinates to show an approximate area, not the exact address.
+  const approximateMapProperty = {
+    ...currentProperty,
+    latitude:
+      typeof currentProperty.latitude === "number"
+        ? Number(currentProperty.latitude.toFixed(2))
+        : null,
+    longitude:
+      typeof currentProperty.longitude === "number"
+        ? Number(currentProperty.longitude.toFixed(2))
+        : null,
+    location: "Approximate property area",
+  };
 
   const whatsappMessage = encodeURIComponent(
     `Hello DitiHomes, I'm interested in the ${currentProperty.title} in ${currentProperty.location} listed at ${currentProperty.price}. Please I'd like to get more information.\n\nProperty link: ${propertyUrl}`,
@@ -375,6 +491,43 @@ function PropertyDetails() {
                 ))}
               </div>
             </div>
+
+            {/* Property Location */}
+            <div className={`mt-6 p-5 sm:mt-8 sm:p-8 ${cardClass}`}>
+              <div className="mb-5">
+                <h2 className={`text-xl font-bold sm:text-2xl ${mainText}`}>
+                  Property Location
+                </h2>
+
+                <p className={`mt-2 text-sm leading-6 ${secondaryText}`}>
+                  Explore the approximate area of this property on the map. The
+                  exact location is shared during property verification.
+                </p>
+              </div>
+
+              {approximateMapProperty.latitude !== null &&
+              approximateMapProperty.longitude !== null ? (
+                <PropertyMap
+                  properties={[approximateMapProperty]}
+                  height="320px"
+                />
+              ) : (
+                <div className="flex min-h-64 items-center justify-center rounded-2xl border border-(--dh-border) bg-(--dh-bg-secondary) p-6 text-center">
+                  <div>
+                    <FiMapPin size={30} className="mx-auto text-(--dh-gold)" />
+
+                    <p className={`mt-3 font-semibold ${mainText}`}>
+                      Location map unavailable
+                    </p>
+
+                    <p className={`mt-2 text-sm ${secondaryText}`}>
+                      Location coordinates have not been provided for this
+                      property.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Contact Panel */}
@@ -395,26 +548,94 @@ function PropertyDetails() {
                 or discuss this property.
               </p>
 
-              {/* Consultant Details */}
-              <div className="mt-5 flex min-w-0 items-center gap-3 rounded-xl border border-(--dh-border) bg-(--dh-bg-secondary) p-3 sm:mt-7 sm:gap-4 sm:rounded-2xl sm:p-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--dh-gold)/15 text-(--dh-gold) sm:h-12 sm:w-12">
-                  <FiUser size={22} />
+              {/* Actual Listing Agent */}
+              <div className="mt-5 rounded-xl border border-(--dh-border) bg-(--dh-bg-secondary) p-4 sm:mt-7 sm:rounded-2xl sm:p-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-(--dh-gold)/15 text-(--dh-gold)">
+                    <FiUser size={23} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className={`font-bold ${mainText}`}>
+                      {currentProperty.agent?.full_name || "DitiHomes"}
+                    </p>
+
+                    <p className={`text-sm ${secondaryText}`}>
+                      {currentProperty.agent?.agency_name ||
+                        "Property Consultant"}
+                    </p>
+                  </div>
+
+                  {currentProperty.agent?.is_verified && (
+                    <div
+                      className="flex shrink-0 items-center gap-1 rounded-full bg-(--dh-success)/10 px-2 py-1 text-xs font-semibold text-(--dh-success)"
+                      title="Verified agent"
+                    >
+                      <FiCheckCircle size={14} />
+                      Verified
+                    </div>
+                  )}
                 </div>
 
-                <div className="min-w-0">
-                  <p className={`font-bold ${mainText}`}>DitiHomes</p>
-                  <p className={`text-sm ${secondaryText}`}>
-                    Property Consultant
-                  </p>
-
+                {currentProperty.agent?.phone && (
                   <a
-                    href={`tel:${DITI_HOMES_PHONE}`}
-                    className="mt-1 block wrap-break-words text-sm font-semibold text-(--dh-gold) hover:underline"
+                    href={`tel:${currentProperty.agent.phone}`}
+                    className="mt-4 flex items-center gap-2 text-sm font-semibold text-(--dh-gold) hover:underline"
                   >
-                    +234 814 267 6421
+                    <FiPhone size={16} />
+                    {currentProperty.agent.phone}
                   </a>
-                </div>
+                )}
+
+                {currentProperty.agent?.email && (
+                  <a
+                    href={`mailto:${currentProperty.agent.email}`}
+                    className={`mt-2 flex items-center gap-2 text-sm ${secondaryText} hover:text-(--dh-gold)`}
+                  >
+                    <FiMail size={16} />
+                    {currentProperty.agent.email}
+                  </a>
+                )}
+
+                {!currentProperty.agent && (
+                  <p className={`mt-3 text-xs leading-5 ${secondaryText}`}>
+                    Contact DitiHomes for assistance with this property.
+                  </p>
+                )}
               </div>
+
+              {/* Save / Unsave Property */}
+              <button
+                type="button"
+                onClick={handleToggleFavorite}
+                disabled={favoriteLoading}
+                aria-pressed={isFavorite}
+                className={`mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 sm:text-base ${
+                  isFavorite
+                    ? "border-(--dh-danger)/40 bg-(--dh-danger)/10 text-(--dh-danger)"
+                    : "border-(--dh-border) text-(--dh-white) hover:border-(--dh-gold) hover:bg-(--dh-gold)/10 hover:text-(--dh-gold)"
+                }`}
+              >
+                <FiHeart
+                  size={19}
+                  fill={isFavorite ? "currentColor" : "none"}
+                />
+
+                {favoriteLoading
+                  ? "Updating..."
+                  : isFavorite
+                    ? "Saved to Favourites"
+                    : "Save to Favourites"}
+              </button>
+
+              {favoriteMessage && (
+                <p
+                  role="status"
+                  className="mt-2 text-center text-xs text-(--dh-muted)"
+                >
+                  {favoriteMessage}
+                </p>
+              )}
 
               {/* Call */}
               <a

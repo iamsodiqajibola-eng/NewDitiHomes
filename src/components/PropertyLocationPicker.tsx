@@ -1,108 +1,167 @@
-import { useEffect } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  useMapEvents,
-  useMap,
-} from "react-leaflet";
+import { useState } from "react";
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-type PropertyLocationPickerProps = {
-  latitude: number | null;
-  longitude: number | null;
-  onLocationSelect: (latitude: number, longitude: number) => void;
+type Coordinates = {
+  latitude: number;
+  longitude: number;
 };
 
-const markerIcon = L.icon({
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
+type PropertyLocationPickerProps = {
+  value?: Coordinates | null;
+  onChange: (coordinates: Coordinates) => void;
+};
+
+const defaultPosition: [number, number] = [6.5244, 3.3792];
+
+const propertyMarker = L.divIcon({
+  className: "",
+  html: `
+    <div style="
+      width: 34px;
+      height: 34px;
+      background: #d6ad55;
+      border: 3px solid white;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      box-shadow: 0 2px 8px rgba(0,0,0,.35);
+    "></div>
+  `,
+  iconSize: [34, 34],
+  iconAnchor: [17, 34],
 });
 
 function MapClickHandler({
-  onLocationSelect,
+  onSelect,
 }: {
-  onLocationSelect: (latitude: number, longitude: number) => void;
+  onSelect: (position: Coordinates) => void;
 }) {
   useMapEvents({
     click(event) {
-      onLocationSelect(event.latlng.lat, event.latlng.lng);
+      onSelect({
+        latitude: event.latlng.lat,
+        longitude: event.latlng.lng,
+      });
     },
   });
 
   return null;
 }
 
-function MapUpdater({
-  latitude,
-  longitude,
-}: {
-  latitude: number | null;
-  longitude: number | null;
-}) {
-  const map = useMap();
+function MapPositionUpdater({ position }: { position: [number, number] }) {
+  const map = useMapEvents({});
 
-  useEffect(() => {
-    if (latitude !== null && longitude !== null) {
-      map.flyTo([latitude, longitude], 16);
-    }
-  }, [latitude, longitude, map]);
+  // Keep the map centred when the selected location changes.
+  map.setView(position, map.getZoom());
 
   return null;
 }
 
-export default function PropertyLocationPicker({
-  latitude,
-  longitude,
-  onLocationSelect,
+function PropertyLocationPicker({
+  value,
+  onChange,
 }: PropertyLocationPickerProps) {
-  const defaultCenter: [number, number] = [6.5244, 3.3792];
+  const [position, setPosition] = useState<[number, number]>(
+    value ? [value.latitude, value.longitude] : defaultPosition,
+  );
+
+  const [hasSelectedLocation, setHasSelectedLocation] = useState(
+    Boolean(value),
+  );
+
+  function updatePosition(latitude: number, longitude: number) {
+    const nextPosition: [number, number] = [latitude, longitude];
+
+    setPosition(nextPosition);
+    setHasSelectedLocation(true);
+
+    onChange({ latitude, longitude });
+  }
 
   return (
-    <div className="space-y-3">
-      <div className="overflow-hidden rounded-xl border border-(--dh-border)">
+    <div className="space-y-4">
+      <div>
+        <h3 className="font-semibold text-(--dh-white)">
+          Select Property Location
+        </h3>
+
+        <p className="mt-1 text-sm leading-6 text-(--dh-muted)">
+          Click anywhere on the map to place a marker at the property's
+          location. You can also drag the marker to adjust it.
+        </p>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-(--dh-border)">
         <MapContainer
-          center={
-            latitude !== null && longitude !== null
-              ? [latitude, longitude]
-              : defaultCenter
-          }
+          center={position}
           zoom={12}
           scrollWheelZoom
-          style={{ height: "380px", width: "100%" }}
+          className="h-90 w-full"
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          <MapClickHandler onLocationSelect={onLocationSelect} />
+          <MapClickHandler
+            onSelect={(coordinates) =>
+              updatePosition(coordinates.latitude, coordinates.longitude)
+            }
+          />
 
-          <MapUpdater latitude={latitude} longitude={longitude} />
+          <MapPositionUpdater position={position} />
 
-          {latitude !== null && longitude !== null && (
-            <Marker position={[latitude, longitude]} icon={markerIcon} />
+          {hasSelectedLocation && (
+            <Marker
+              position={position}
+              icon={propertyMarker}
+              draggable
+              eventHandlers={{
+                dragend(event) {
+                  const marker = event.target;
+                  const coordinates = marker.getLatLng();
+
+                  updatePosition(coordinates.lat, coordinates.lng);
+                },
+              }}
+            />
           )}
         </MapContainer>
       </div>
 
-      <p className="text-sm text-(--dh-muted)">
-        Click on the map to mark the property's location. You can adjust the
-        marker by clicking another position.
-      </p>
+      <div className="rounded-xl border border-(--dh-border) bg-(--dh-bg-secondary) p-4">
+        {hasSelectedLocation ? (
+          <>
+            <p className="text-sm font-medium text-(--dh-success)">
+              Location selected
+            </p>
 
-      {latitude !== null && longitude !== null && (
-        <p className="text-xs text-(--dh-muted)">
-          Location selected: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-        </p>
-      )}
+            <div className="mt-2 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <p className="text-(--dh-muted)">Latitude</p>
+                <p className="mt-1 font-medium text-(--dh-white)">
+                  {position[0].toFixed(6)}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-(--dh-muted)">Longitude</p>
+                <p className="mt-1 font-medium text-(--dh-white)">
+                  {position[1].toFixed(6)}
+                </p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-(--dh-muted)">
+            No location selected yet. Click on the map to choose the property
+            location.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
+
+export default PropertyLocationPicker;

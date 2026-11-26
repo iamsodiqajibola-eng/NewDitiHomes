@@ -19,6 +19,10 @@ import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
+
+import AgentWelcome from "./agent/AgentWelcome";
+import AgentLogin from "./agent/AgentLogin";
+import AgentSignup from "./agent/AgentSignup";
 import AgentDashboard from "./agent/AgentDashboard";
 import AgentProperties from "./agent/AgentProperties";
 import AgentAddProperty from "./agent/AgentAddProperty";
@@ -64,17 +68,24 @@ type AccessStatus =
 type AccessRouteProps = {
   children: ReactNode;
   requireAdmin?: boolean;
+  requireAgent?: boolean;
+  redirectTo?: string;
 };
 
-/* Protect pages that require a signed-in user or administrator */
-function AccessRoute({ children, requireAdmin = false }: AccessRouteProps) {
+/* Protect pages that require authentication and the correct account role */
+function AccessRoute({
+  children,
+  requireAdmin = false,
+  requireAgent = false,
+  redirectTo = "/login",
+}: AccessRouteProps) {
   const [accessStatus, setAccessStatus] = useState<AccessStatus>("checking");
 
   useEffect(() => {
     let isMounted = true;
 
     async function verifyAccess(userId: string) {
-      if (!requireAdmin) {
+      if (!requireAdmin && !requireAgent) {
         if (isMounted) {
           setAccessStatus("authenticated");
         }
@@ -89,7 +100,7 @@ function AccessRoute({ children, requireAdmin = false }: AccessRouteProps) {
           .maybeSingle();
 
         if (error) {
-          console.error("Unable to verify administrator role:", error);
+          console.error("Unable to verify account role:", error);
 
           if (isMounted) {
             setAccessStatus("forbidden");
@@ -98,11 +109,25 @@ function AccessRoute({ children, requireAdmin = false }: AccessRouteProps) {
           return;
         }
 
-        if (isMounted) {
-          setAccessStatus(data?.role === "admin" ? "admin" : "forbidden");
+        if (requireAdmin) {
+          if (isMounted) {
+            setAccessStatus(data?.role === "admin" ? "admin" : "forbidden");
+          }
+
+          return;
+        }
+
+        if (requireAgent) {
+          if (isMounted) {
+            setAccessStatus(
+              data?.role === "agent" ? "authenticated" : "forbidden",
+            );
+          }
+
+          return;
         }
       } catch (error) {
-        console.error("Administrator verification failed:", error);
+        console.error("Account role verification failed:", error);
 
         if (isMounted) {
           setAccessStatus("forbidden");
@@ -154,7 +179,6 @@ function AccessRoute({ children, requireAdmin = false }: AccessRouteProps) {
 
       setAccessStatus("checking");
 
-      // Verify access after the authentication callback completes.
       void Promise.resolve().then(() => {
         if (isMounted) {
           return verifyAccess(session.user.id);
@@ -166,7 +190,7 @@ function AccessRoute({ children, requireAdmin = false }: AccessRouteProps) {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [requireAdmin]);
+  }, [requireAdmin, requireAgent]);
 
   if (accessStatus === "checking") {
     return (
@@ -174,14 +198,16 @@ function AccessRoute({ children, requireAdmin = false }: AccessRouteProps) {
         <p className="text-sm font-medium text-[#D6AD55]">
           {requireAdmin
             ? "Verifying administrator access..."
-            : "Checking your account..."}
+            : requireAgent
+              ? "Verifying agent access..."
+              : "Checking your account..."}
         </p>
       </div>
     );
   }
 
   if (accessStatus === "unauthenticated") {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
   if (accessStatus === "forbidden") {
@@ -207,7 +233,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
 
-          {/* Signed-in user pages */}
+          {/* Signed-in customer pages */}
           <Route
             path="/profile"
             element={
@@ -217,20 +243,26 @@ function App() {
             }
           />
 
-          {/* Agent Dashboard */}
+          {/* Public Agent Portal */}
+          <Route path="/agent" element={<AgentWelcome />} />
+          <Route path="/agent/login" element={<AgentLogin />} />
+          <Route path="/agent/signup" element={<AgentSignup />} />
+
+          {/* Protected Agent Dashboard */}
           <Route
-            path="/agent"
+            path="/agent/dashboard"
             element={
-              <AccessRoute>
+              <AccessRoute requireAgent redirectTo="/agent/login">
                 <AgentDashboard />
               </AccessRoute>
             }
           />
 
+          {/* Agent Properties */}
           <Route
             path="/agent/properties"
             element={
-              <AccessRoute>
+              <AccessRoute requireAgent redirectTo="/agent/login">
                 <AgentProperties />
               </AccessRoute>
             }
@@ -239,52 +271,57 @@ function App() {
           <Route
             path="/agent/properties/add"
             element={
-              <AccessRoute>
+              <AccessRoute requireAgent redirectTo="/agent/login">
                 <AgentAddProperty />
               </AccessRoute>
             }
           />
 
+          {/* Agent Inspections */}
           <Route
             path="/agent/inspections"
             element={
-              <AccessRoute>
+              <AccessRoute requireAgent redirectTo="/agent/login">
                 <AgentInspections />
               </AccessRoute>
             }
           />
 
+          {/* Agent Enquiries */}
           <Route
             path="/agent/enquiries"
             element={
-              <AccessRoute>
+              <AccessRoute requireAgent redirectTo="/agent/login">
                 <AgentEnquiries />
               </AccessRoute>
             }
           />
 
+          {/* Agent Customers */}
           <Route
             path="/agent/customers"
             element={
-              <AccessRoute>
+              <AccessRoute requireAgent redirectTo="/agent/login">
                 <AgentCustomers />
               </AccessRoute>
             }
           />
 
+          {/* Agent Settings */}
           <Route
             path="/agent/settings"
             element={
-              <AccessRoute>
+              <AccessRoute requireAgent redirectTo="/agent/login">
                 <AgentSettings />
               </AccessRoute>
             }
           />
 
+          {/* Agent Support */}
           <Route
             path="/agent/support"
             element={
-              <AccessRoute>
+              <AccessRoute requireAgent redirectTo="/agent/login">
                 <AgentSupport />
               </AccessRoute>
             }
@@ -294,7 +331,7 @@ function App() {
           <Route
             path="/admin"
             element={
-              <AccessRoute>
+              <AccessRoute requireAdmin>
                 <AdminDashboard />
               </AccessRoute>
             }
@@ -303,7 +340,7 @@ function App() {
           <Route
             path="/admin/agents"
             element={
-              <AccessRoute>
+              <AccessRoute requireAdmin>
                 <AdminAgents />
               </AccessRoute>
             }
@@ -312,7 +349,7 @@ function App() {
           <Route
             path="/admin/properties"
             element={
-              <AccessRoute>
+              <AccessRoute requireAdmin>
                 <AdminProperties />
               </AccessRoute>
             }
@@ -321,7 +358,7 @@ function App() {
           <Route
             path="/admin/inspections"
             element={
-              <AccessRoute>
+              <AccessRoute requireAdmin>
                 <AdminInspections />
               </AccessRoute>
             }
@@ -348,7 +385,7 @@ function App() {
           <Route
             path="/admin/users"
             element={
-              <AccessRoute>
+              <AccessRoute requireAdmin>
                 <AdminUsers />
               </AccessRoute>
             }
@@ -357,7 +394,7 @@ function App() {
           <Route
             path="/admin/enquiries"
             element={
-              <AccessRoute>
+              <AccessRoute requireAdmin>
                 <AdminEnquiries />
               </AccessRoute>
             }
@@ -366,7 +403,7 @@ function App() {
           <Route
             path="/admin/support"
             element={
-              <AccessRoute>
+              <AccessRoute requireAdmin>
                 <AdminSupport />
               </AccessRoute>
             }
@@ -375,7 +412,7 @@ function App() {
           <Route
             path="/admin/settings"
             element={
-              <AccessRoute>
+              <AccessRoute requireAdmin>
                 <AdminSettings />
               </AccessRoute>
             }

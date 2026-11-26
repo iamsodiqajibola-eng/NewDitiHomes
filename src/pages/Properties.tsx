@@ -1,15 +1,23 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiSearch, FiMapPin, FiSliders, FiX } from "react-icons/fi";
+import {
+  FiSearch,
+  FiMapPin,
+  FiSliders,
+  FiX,
+  FiList,
+  FiMap,
+} from "react-icons/fi";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import Environment from "../components/Environment";
 import PropertyCard from "../components/PropertyCard";
-import CitySkylineVideo from "../assets/city-skyline.mp4";
+import PropertyMap from "../components/PropertyMap";
 
 import { useProperties } from "../context/PropertyContext";
 import { useTheme } from "../context/ThemeContext";
+
+type ViewMode = "list" | "map";
 
 function Properties() {
   const navigate = useNavigate();
@@ -24,6 +32,7 @@ function Properties() {
   const [propertyType, setPropertyType] = useState("");
   const [purpose, setPurpose] = useState("");
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
 
   useEffect(() => {
     const purposeFromUrl = searchParams.get("purpose");
@@ -123,37 +132,19 @@ function Properties() {
     ? "bg-white text-[#202226]"
     : "bg-[#1B1D20] text-white";
 
+  const viewButtonClass = (mode: ViewMode) =>
+    `flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+      viewMode === mode
+        ? "bg-(--dh-gold) text-[#111315]"
+        : "bg-(--dh-bg-secondary) text-(--dh-muted) hover:text-(--dh-white)"
+    }`;
+
   return (
     <div className="dh-page min-h-screen">
       <Navbar />
 
-      {/* Hero Section */}
-      <Environment
-        video={CitySkylineVideo}
-        overlay={isLight ? "bg-white/65" : "bg-[#041126]/55"}
-        className="pt-32"
-      >
-        <div className="mx-auto max-w-7xl px-5 pb-20 md:px-8 lg:px-10">
-          <div className="max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-(--dh-gold)">
-              DitiHomes Properties
-            </p>
-
-            <h1 className="mt-4 text-4xl font-bold leading-tight text-(--dh-white) drop-shadow-lg sm:text-5xl lg:text-6xl">
-              Find a property that feels like
-              <span className="text-(--dh-gold)"> home.</span>
-            </h1>
-
-            <p className="mt-6 max-w-2xl text-base leading-7 text-(--dh-white) sm:text-lg">
-              Explore homes, apartments, land and shortlets available across
-              different locations in Nigeria.
-            </p>
-          </div>
-        </div>
-      </Environment>
-
       {/* Search and Filters */}
-      <section className="bg-(--dh-bg) px-5 py-10 transition-colors duration-300 md:px-8 lg:px-10">
+      <section className="bg-(--dh-bg) px-5 pb-10 pt-28 transition-colors duration-300 md:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-3xl border border-(--dh-border) bg-(--dh-surface) p-5 shadow-xl transition-colors duration-300 md:p-6">
             <div className="mb-5 flex items-center gap-3">
@@ -310,7 +301,8 @@ function Properties() {
       {/* Available Properties */}
       <section className="bg-(--dh-bg-secondary) px-5 py-16 transition-colors duration-300 md:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          {/* Section Heading */}
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-(--dh-gold)">
                 Explore
@@ -319,43 +311,131 @@ function Properties() {
               <h2 className="mt-2 text-3xl font-bold text-(--dh-white) sm:text-4xl">
                 Available Properties
               </h2>
-            </div>
 
-            <p className="text-sm font-medium text-(--dh-muted)">
-              {filteredProperties.length}{" "}
-              {filteredProperties.length === 1 ? "property" : "properties"}{" "}
-              found
-            </p>
-          </div>
-
-          {filteredProperties.length > 0 ? (
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProperties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-10 rounded-3xl border border-(--dh-border) bg-(--dh-surface) px-6 py-16 text-center shadow-lg transition-colors duration-300">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-(--dh-gold)/20 bg-(--dh-gold)/10 text-(--dh-gold)">
-                <FiSearch size={26} />
-              </div>
-
-              <h3 className="mt-5 text-2xl font-bold text-(--dh-white)">
-                No properties found
-              </h3>
-
-              <p className="mx-auto mt-3 max-w-md text-(--dh-muted)">
-                We couldn't find a property matching your current search or
-                filters. Try another location, property type or purpose.
+              <p className="mt-2 text-sm font-medium text-(--dh-muted)">
+                {filteredProperties.length}{" "}
+                {filteredProperties.length === 1 ? "property" : "properties"}{" "}
+                found
               </p>
+            </div>
+
+            {/* List / Map Toggle */}
+            <div className="flex w-full gap-2 rounded-2xl border border-(--dh-border) bg-(--dh-surface) p-2 sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`${viewButtonClass("list")} flex-1 sm:flex-none`}
+                aria-pressed={viewMode === "list"}
+              >
+                <FiList size={17} />
+                List View
+              </button>
 
               <button
                 type="button"
-                onClick={clearFilters}
-                className="mt-6 rounded-xl bg-(--dh-gold) px-6 py-3 font-semibold text-[#111315] transition hover:bg-(--dh-gold-light)"
+                onClick={() => setViewMode("map")}
+                className={`${viewButtonClass("map")} flex-1 sm:flex-none`}
+                aria-pressed={viewMode === "map"}
               >
-                Clear Filters
+                <FiMap size={17} />
+                Map View
               </button>
+            </div>
+          </div>
+
+          {/* List View */}
+          {viewMode === "list" && (
+            <>
+              {filteredProperties.length > 0 ? (
+                <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredProperties.map((property) => (
+                    <PropertyCard key={property.id} property={property} />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-10 rounded-3xl border border-(--dh-border) bg-(--dh-surface) px-6 py-16 text-center shadow-lg transition-colors duration-300">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-(--dh-gold)/20 bg-(--dh-gold)/10 text-(--dh-gold)">
+                    <FiSearch size={26} />
+                  </div>
+
+                  <h3 className="mt-5 text-2xl font-bold text-(--dh-white)">
+                    No properties found
+                  </h3>
+
+                  <p className="mx-auto mt-3 max-w-md text-(--dh-muted)">
+                    We couldn't find a property matching your current search or
+                    filters. Try another location, property type or purpose.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-6 rounded-xl bg-(--dh-gold) px-6 py-3 font-semibold text-[#111315] transition hover:bg-(--dh-gold-light)"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Map View */}
+          {viewMode === "map" && (
+            <div className="mt-10">
+              {filteredProperties.length > 0 ? (
+                <>
+                  {/* Desktop: Property Cards + Map */}
+                  <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                    <div className="grid max-h-162.5 grid-cols-1 gap-5 overflow-y-auto pr-2 xl:grid-cols-2">
+                      {filteredProperties.map((property) => (
+                        <PropertyCard key={property.id} property={property} />
+                      ))}
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="sticky top-24">
+                        <PropertyMap
+                          properties={filteredProperties}
+                          height="650px"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile and Tablet: Map Only */}
+                  <div className="lg:hidden">
+                    <PropertyMap
+                      properties={filteredProperties}
+                      height="520px"
+                    />
+
+                    <p className="mt-3 text-xs text-(--dh-muted)">
+                      Switch to List View to browse property cards.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-3xl border border-(--dh-border) bg-(--dh-surface) px-6 py-16 text-center shadow-lg">
+                  <FiMapPin className="mx-auto text-(--dh-gold)" size={30} />
+
+                  <h3 className="mt-5 text-2xl font-bold text-(--dh-white)">
+                    No properties to display
+                  </h3>
+
+                  <p className="mt-3 text-sm text-(--dh-muted)">
+                    Try changing your search or filters to find available
+                    properties.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-6 rounded-xl bg-(--dh-gold) px-6 py-3 font-semibold text-[#111315] transition hover:bg-(--dh-gold-light)"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

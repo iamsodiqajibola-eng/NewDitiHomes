@@ -18,10 +18,15 @@ import {
   FiLogOut,
   FiCamera,
   FiTrash2,
+  FiExternalLink,
+  FiRefreshCw,
 } from "react-icons/fi";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+
+import type { Property } from "../data/properties";
+import { supabase } from "../lib/supabase";
 
 type ProfileDetails = {
   fullName: string;
@@ -39,6 +44,10 @@ const initialProfile: ProfileDetails = {
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
 
+type SavedProperty = Property & {
+  favorite_id: number;
+};
+
 const Profile = () => {
   const [profile, setProfile] = useState<ProfileDetails>(initialProfile);
   const [formData, setFormData] = useState<ProfileDetails>(initialProfile);
@@ -51,7 +60,100 @@ const Profile = () => {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState("");
 
+  const [savedProperties, setSavedProperties] = useState<SavedProperty[]>([]);
+  const [savedLoading, setSavedLoading] = useState(true);
+  const [savedError, setSavedError] = useState("");
+  const [removingFavorite, setRemovingFavorite] = useState<number | null>(null);
+
   const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Load customer profile and saved properties
+  const loadSavedProperties = async () => {
+    setSavedLoading(true);
+    setSavedError("");
+
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError) throw authError;
+
+      if (!user) {
+        setSavedProperties([]);
+        setSavedError("Please log in to view your saved properties.");
+        return;
+      }
+
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      setProfile((previous) => ({
+        ...previous,
+        fullName:
+          profileData?.full_name ||
+          user.user_metadata?.full_name ||
+          "Your Name",
+        email: profileData?.email || user.email || "your@email.com",
+      }));
+
+      const { data: favorites, error: favoritesError } = await supabase
+        .from("property_favorites")
+        .select("id, property_id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (favoritesError) throw favoritesError;
+
+      const favoriteRows = favorites ?? [];
+
+      if (favoriteRows.length === 0) {
+        setSavedProperties([]);
+        return;
+      }
+
+      const propertyIds = favoriteRows.map((favorite) => favorite.property_id);
+
+      const { data: properties, error: propertiesError } = await supabase
+        .from("properties")
+        .select("*")
+        .in("id", propertyIds)
+        .eq("is_deleted", false);
+
+      if (propertiesError) throw propertiesError;
+
+      const favoriteMap = new Map(
+        favoriteRows.map((favorite) => [
+          Number(favorite.property_id),
+          Number(favorite.id),
+        ]),
+      );
+
+      const saved = (properties ?? []).map((property) => ({
+        ...property,
+        favorite_id: favoriteMap.get(Number(property.id)) ?? 0,
+      })) as SavedProperty[];
+
+      setSavedProperties(saved);
+    } catch (error) {
+      console.error("Unable to load customer profile:", error);
+      setSavedError(
+        "We couldn't load your saved properties. Please try again.",
+      );
+    } finally {
+      setSavedLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadSavedProperties();
+  }, []);
 
   useEffect(() => {
     if (!profilePhoto) return;
@@ -121,6 +223,38 @@ const Profile = () => {
     }));
   };
 
+  const handleRemoveFavorite = async (propertyId: number) => {
+    setRemovingFavorite(propertyId);
+    setSavedError("");
+
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError) throw authError;
+      if (!user) throw new Error("Please log in again.");
+
+      const { error } = await supabase
+        .from("property_favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("property_id", propertyId);
+
+      if (error) throw error;
+
+      setSavedProperties((current) =>
+        current.filter((property) => property.id !== propertyId),
+      );
+    } catch (error) {
+      console.error("Unable to remove saved property:", error);
+      setSavedError("Unable to remove this property. Please try again.");
+    } finally {
+      setRemovingFavorite(null);
+    }
+  };
+
   const initials = profile.fullName
     .split(" ")
     .filter(Boolean)
@@ -167,7 +301,6 @@ const Profile = () => {
               {/* Profile Card */}
               <div className={`${cardClass} p-6`}>
                 <div className="flex flex-col items-center text-center">
-                  {/* Profile Photo */}
                   <div className="relative mb-4 flex h-24 w-24 items-center justify-center overflow-visible rounded-full border-2 border-(--dh-gold) bg-(--dh-bg-secondary) text-3xl font-semibold text-(--dh-gold)">
                     {profilePhoto ? (
                       <img
@@ -278,6 +411,9 @@ const Profile = () => {
                 >
                   <FiHeart size={17} />
                   Saved Properties
+                  <span className="ml-auto text-xs">
+                    {savedProperties.length}
+                  </span>
                 </button>
 
                 <button
@@ -319,6 +455,10 @@ const Profile = () => {
 
                 <button
                   type="button"
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    window.location.href = "/login";
+                  }}
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-(--dh-danger) transition hover:bg-(--dh-danger)/10"
                 >
                   <FiLogOut size={17} />
@@ -336,7 +476,9 @@ const Profile = () => {
                     <FiHeart size={20} />
                   </div>
 
-                  <p className="text-2xl font-semibold">0</p>
+                  <p className="text-2xl font-semibold tabular-nums">
+                    {savedLoading ? "..." : savedProperties.length}
+                  </p>
                   <p className={`mt-1 text-sm ${secondaryText}`}>
                     Saved Properties
                   </p>
@@ -497,50 +639,202 @@ const Profile = () => {
                       <span
                         className={`rounded-full border border-(--dh-border) px-3 py-1 text-xs ${secondaryText}`}
                       >
-                        0 saved
+                        {savedProperties.length} saved
                       </span>
                     )}
-                  </div>
-                </div>
 
-                <div className="flex min-h-82.5 flex-col items-center justify-center px-5 py-12 text-center">
-                  <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-(--dh-gold)/20 bg-(--dh-gold)/10 text-(--dh-gold)">
-                    {activeTab === "saved" ? (
-                      <FiHeart size={32} />
-                    ) : activeTab === "enquiries" ? (
-                      <FiMessageSquare size={32} />
-                    ) : (
-                      <FiClock size={32} />
+                    {activeTab === "saved" && (
+                      <button
+                        type="button"
+                        onClick={() => void loadSavedProperties()}
+                        disabled={savedLoading}
+                        aria-label="Refresh saved properties"
+                        className={`rounded-lg p-2 transition hover:bg-(--dh-bg-secondary) ${secondaryText} hover:text-(--dh-gold)`}
+                      >
+                        <FiRefreshCw
+                          size={17}
+                          className={savedLoading ? "animate-spin" : ""}
+                        />
+                      </button>
                     )}
                   </div>
+                </div>
 
-                  <h3 className="text-lg font-semibold">
-                    {activeTab === "saved"
-                      ? "No saved properties yet"
-                      : activeTab === "enquiries"
+                {activeTab === "saved" ? (
+                  <div className="p-5 sm:p-6">
+                    {savedLoading ? (
+                      <div className="flex min-h-64 items-center justify-center">
+                        <div className="text-center">
+                          <FiRefreshCw
+                            size={28}
+                            className="mx-auto animate-spin text-(--dh-gold)"
+                          />
+                          <p className={`mt-4 text-sm ${secondaryText}`}>
+                            Loading your saved properties...
+                          </p>
+                        </div>
+                      </div>
+                    ) : savedError ? (
+                      <div className="flex min-h-64 flex-col items-center justify-center text-center">
+                        <p className="text-sm text-(--dh-danger)">
+                          {savedError}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => void loadSavedProperties()}
+                          className="mt-4 rounded-xl bg-(--dh-gold) px-5 py-3 text-sm font-semibold text-(--dh-bg)"
+                        >
+                          Try Again
+                        </button>
+                      </div>
+                    ) : savedProperties.length === 0 ? (
+                      <div className="flex min-h-64 flex-col items-center justify-center px-5 py-12 text-center">
+                        <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-(--dh-gold)/20 bg-(--dh-gold)/10 text-(--dh-gold)">
+                          <FiHeart size={32} />
+                        </div>
+
+                        <h3 className="text-lg font-semibold">
+                          No saved properties yet
+                        </h3>
+
+                        <p
+                          className={`mt-2 max-w-sm text-sm leading-6 ${secondaryText}`}
+                        >
+                          When you find a property you love, tap the heart icon
+                          to save it here and easily find it later.
+                        </p>
+
+                        <Link
+                          to="/properties"
+                          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-(--dh-gold) px-5 py-3 text-sm font-semibold text-(--dh-bg) transition hover:bg-(--dh-gold-light)"
+                        >
+                          <FiHome size={16} />
+                          Explore Properties
+                          <FiArrowRight size={16} />
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        {savedProperties.map((property) => (
+                          <article
+                            key={property.id}
+                            className="overflow-hidden rounded-2xl border border-(--dh-border) bg-(--dh-bg-secondary)"
+                          >
+                            <Link
+                              to={`/properties/${property.id}`}
+                              className="group relative block aspect-16/10 overflow-hidden"
+                            >
+                              <img
+                                src={property.image}
+                                alt={property.title}
+                                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                              />
+
+                              <span className="absolute left-3 top-3 rounded-full bg-black/75 px-3 py-1.5 text-xs font-semibold text-white">
+                                {property.purpose}
+                              </span>
+                            </Link>
+
+                            <div className="p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <Link
+                                    to={`/properties/${property.id}`}
+                                    className="font-semibold transition hover:text-(--dh-gold)"
+                                  >
+                                    {property.title}
+                                  </Link>
+
+                                  <p
+                                    className={`mt-2 flex items-center gap-1.5 text-xs ${secondaryText}`}
+                                  >
+                                    <FiMapPin size={14} className="shrink-0" />
+                                    <span className="truncate">
+                                      {property.location}
+                                    </span>
+                                  </p>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void handleRemoveFavorite(property.id)
+                                  }
+                                  disabled={removingFavorite === property.id}
+                                  aria-label={`Remove ${property.title} from saved properties`}
+                                  title="Remove from saved properties"
+                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-(--dh-danger)/30 bg-(--dh-danger)/10 text-(--dh-danger) transition hover:bg-(--dh-danger) hover:text-white disabled:opacity-50"
+                                >
+                                  {removingFavorite === property.id ? (
+                                    <FiRefreshCw
+                                      size={16}
+                                      className="animate-spin"
+                                    />
+                                  ) : (
+                                    <FiHeart size={17} fill="currentColor" />
+                                  )}
+                                </button>
+                              </div>
+
+                              <p className="mt-4 text-lg font-bold text-(--dh-gold)">
+                                {property.price}
+                              </p>
+
+                              <div className="mt-4 flex items-center justify-between gap-3 border-t border-(--dh-border) pt-4">
+                                <span className={`text-xs ${secondaryText}`}>
+                                  {property.bedrooms > 0
+                                    ? `${property.bedrooms} Bedrooms`
+                                    : property.type}
+                                </span>
+
+                                <Link
+                                  to={`/properties/${property.id}`}
+                                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-(--dh-gold) transition hover:opacity-75"
+                                >
+                                  View Property
+                                  <FiExternalLink size={14} />
+                                </Link>
+                              </div>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex min-h-82.5 flex-col items-center justify-center px-5 py-12 text-center">
+                    <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-(--dh-gold)/20 bg-(--dh-gold)/10 text-(--dh-gold)">
+                      {activeTab === "enquiries" ? (
+                        <FiMessageSquare size={32} />
+                      ) : (
+                        <FiClock size={32} />
+                      )}
+                    </div>
+
+                    <h3 className="text-lg font-semibold">
+                      {activeTab === "enquiries"
                         ? "No enquiries yet"
                         : "Nothing viewed yet"}
-                  </h3>
+                    </h3>
 
-                  <p
-                    className={`mt-2 max-w-sm text-sm leading-6 ${secondaryText}`}
-                  >
-                    {activeTab === "saved"
-                      ? "When you find a property you love, tap the heart icon to save it here and easily find it later."
-                      : activeTab === "enquiries"
+                    <p
+                      className={`mt-2 max-w-sm text-sm leading-6 ${secondaryText}`}
+                    >
+                      {activeTab === "enquiries"
                         ? "When you enquire about a property, your enquiries will appear here."
                         : "Properties you explore will appear here so you can easily find them again."}
-                  </p>
+                    </p>
 
-                  <Link
-                    to="/properties"
-                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-(--dh-gold) px-5 py-3 text-sm font-semibold text-(--dh-bg) transition hover:bg-(--dh-gold-light)"
-                  >
-                    <FiHome size={16} />
-                    Explore Properties
-                    <FiArrowRight size={16} />
-                  </Link>
-                </div>
+                    <Link
+                      to="/properties"
+                      className="mt-6 inline-flex items-center gap-2 rounded-xl bg-(--dh-gold) px-5 py-3 text-sm font-semibold text-(--dh-bg) transition hover:bg-(--dh-gold-light)"
+                    >
+                      <FiHome size={16} />
+                      Explore Properties
+                      <FiArrowRight size={16} />
+                    </Link>
+                  </div>
+                )}
               </div>
 
               {/* Security Section */}

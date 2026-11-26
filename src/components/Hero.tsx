@@ -1,26 +1,17 @@
-import type { Dispatch, SetStateAction } from "react";
-import { FiShield, FiCalendar, FiCheckCircle } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import {
+  FiShield,
+  FiCalendar,
+  FiCheckCircle,
+  FiHome,
+  FiBriefcase,
+  FiArrowRight,
+} from "react-icons/fi";
 import { useTheme } from "../context/ThemeContext";
-import SearchBar from "./SearchBar";
 
-type HeroProps = {
-  location: string;
-  setLocation: Dispatch<SetStateAction<string>>;
-  propertyType: string;
-  setPropertyType: Dispatch<SetStateAction<string>>;
-  purpose: string;
-  setPurpose: Dispatch<SetStateAction<string>>;
-};
-
-function Hero({
-  location,
-  setLocation,
-  propertyType,
-  setPropertyType,
-  purpose,
-  setPurpose,
-}: HeroProps) {
+function Hero() {
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const isLight = theme === "light";
 
   return (
@@ -95,21 +86,72 @@ function Hero({
             sale, rent, lease, and shortlet across Nigeria.
           </p>
 
-          {/* Search Panel */}
-          <div className="mt-9 w-full max-w-4xl sm:mt-11">
-            <SearchBar
-              location={location}
-              setLocation={setLocation}
-              propertyType={propertyType}
-              setPropertyType={setPropertyType}
-              purpose={purpose}
-              setPurpose={setPurpose}
-            />
+          {/* User Entry Options */}
+          <div className="mt-9 grid max-w-2xl gap-4 sm:mt-10 sm:grid-cols-2">
+            {/* Customer */}
+            <button
+              type="button"
+              onClick={() => navigate("/properties")}
+              className="group flex min-h-16 items-center justify-between gap-3 rounded-xl bg-(--dh-gold) px-5 py-4 text-left text-[#111315] shadow-lg transition duration-300 hover:-translate-y-1 hover:bg-(--dh-gold-light) sm:min-h-20 sm:px-6"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <FiHome size={23} className="shrink-0" />
+
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold sm:text-base">
+                    I'm Looking for a Property
+                  </span>
+
+                  <span className="mt-1 block text-xs opacity-75">
+                    Find your next home
+                  </span>
+                </span>
+              </span>
+
+              <FiArrowRight
+                size={21}
+                className="shrink-0 transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </button>
+
+            {/* Agent */}
+            <button
+              type="button"
+              onClick={() => navigate("/agent")}
+              className={`group flex min-h-16 items-center justify-between gap-3 rounded-xl border px-5 py-4 text-left shadow-lg transition duration-300 hover:-translate-y-1 sm:min-h-20 sm:px-6 ${
+                isLight
+                  ? "border-[#202226]/20 bg-white/90 text-[#202226] hover:border-(--dh-gold)"
+                  : "border-white/30 bg-[#111315]/75 text-white backdrop-blur-md hover:border-(--dh-gold)"
+              }`}
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <FiBriefcase size={23} className="shrink-0 text-(--dh-gold)" />
+
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold sm:text-base">
+                    I'm a Real Estate Agent
+                  </span>
+
+                  <span
+                    className={`mt-1 block text-xs ${
+                      isLight ? "text-[#646A73]" : "text-white/65"
+                    }`}
+                  >
+                    List and manage properties
+                  </span>
+                </span>
+              </span>
+
+              <FiArrowRight
+                size={21}
+                className="shrink-0 text-(--dh-gold) transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </button>
           </div>
 
           {/* Property Categories */}
           <div
-            className={`mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-medium transition-colors duration-500 ${
+            className={`mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-medium transition-colors duration-500 ${
               isLight ? "text-[#353A42]" : "text-white/90"
             }`}
           >
@@ -141,6 +183,7 @@ function Hero({
               >
                 Verified
               </p>
+
               <p
                 className={`text-xs sm:text-sm ${
                   isLight ? "text-[#646A73]" : "text-white/65"
@@ -166,6 +209,7 @@ function Hero({
               >
                 Safe
               </p>
+
               <p
                 className={`text-xs sm:text-sm ${
                   isLight ? "text-[#646A73]" : "text-white/65"
@@ -191,6 +235,7 @@ function Hero({
               >
                 Secure
               </p>
+
               <p
                 className={`text-xs sm:text-sm ${
                   isLight ? "text-[#646A73]" : "text-white/65"

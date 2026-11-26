@@ -13,6 +13,7 @@ import {
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyLocationPicker from "../components/PropertyLocationPicker";
+import { supabase } from "../lib/supabase";
 
 function AgentAddProperty() {
   const [form, setForm] = useState({
@@ -38,6 +39,7 @@ function AgentAddProperty() {
 
   const [images, setImages] = useState<File[]>([]);
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateField = (
     event: React.ChangeEvent<
@@ -50,7 +52,10 @@ function AgentAddProperty() {
 
   const handleImages = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
+
     setImages((previous) => [...previous, ...selectedFiles].slice(0, 10));
+
+    event.target.value = "";
   };
 
   const removeImage = (index: number) => {
@@ -62,17 +67,207 @@ function AgentAddProperty() {
     setLongitude(lng);
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (isSubmitting) return;
+
+    setMessage("");
 
     if (latitude === null || longitude === null) {
       setMessage("Please select the property's exact location on the map.");
       return;
     }
 
-    setMessage(
-      "Your form is ready. Property submission will be connected to the backend in the next stage.",
-    );
+    if (images.length > 10) {
+      setMessage("You can upload a maximum of 10 images.");
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    if (images.some((file) => !allowedTypes.includes(file.type))) {
+      setMessage("Only JPG, PNG and WEBP images are allowed.");
+      return;
+    }
+
+    if (images.some((file) => file.size > 5 * 1024 * 1024)) {
+      setMessage("Each image must be 5MB or smaller.");
+      return;
+    }
+
+    if (!form.price || Number(form.price) <= 0) {
+      setMessage("Please enter a valid property price.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const uploadedPaths: string[] = [];
+    let createdPropertyId: number | null = null;
+
+    try {
+      // 1. Get the authenticated user.
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error("Your session has expired. Please log in again.");
+      }
+
+      // 2. Verify that the logged-in user is an agent.
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError || profile?.role !== "agent") {
+        throw new Error("Only registered agents can submit properties.");
+      }
+
+      // 3. Upload property images.
+      const imageUrls: string[] = [];
+
+      for (const file of images) {
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+
+        const filePath = `${user.id}/${crypto.randomUUID()}-${safeFileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("property-images")
+          .upload(filePath, file, {
+            contentType: file.type,
+            upsert: false,
+          });
+
+        if (uploadError) {
+          throw new Error(`Image upload failed: ${uploadError.message}`);
+        }
+
+        uploadedPaths.push(filePath);
+
+        const { data: publicUrlData } = supabase.storage
+          .from("property-images")
+          .getPublicUrl(filePath);
+
+        imageUrls.push(publicUrlData.publicUrl);
+      }
+
+      // 4. Prepare property information.
+      const location = `${form.area.trim()}, ${form.city.trim()}, ${form.state.trim()}`;
+
+      const purpose =
+        form.listingType === "Sale"
+          ? "For Sale"
+          : form.listingType === "Shortlet"
+            ? "Shortlet"
+            : "For Rent";
+
+      const features = [
+        form.toilets ? `${form.toilets} Toilets` : "",
+        form.parking ? `${form.parking} Parking Spaces` : "",
+        form.furnishing || "",
+      ].filter(Boolean);
+
+      // 5. Save the property and attach the agent.
+      const { data: property, error: propertyError } = await supabase
+        .from("properties")
+        .insert({
+          agent_id: user.id,
+          title: form.title.trim(),
+          description: form.description.trim(),
+          location,
+          price: `₦${Number(form.price).toLocaleString("en-NG")}`,
+          type: form.propertyType,
+          purpose,
+          bedrooms: Number(form.bedrooms) || 0,
+          bathrooms: Number(form.bathrooms) || 0,
+          area: form.size.trim(),
+          image: imageUrls[0] || "",
+          images: imageUrls,
+          features,
+          latitude,
+          longitude,
+          status: "pending",
+          is_deleted: false,
+        })
+        .select("id")
+        .single();
+
+      if (propertyError || !property) {
+        throw new Error(
+          propertyError?.message || "Unable to save the property.",
+        );
+      }
+
+      createdPropertyId = property.id;
+
+      // 6. Save the exact property address privately.
+      const { error: addressError } = await supabase
+        .from("property_private_details")
+        .insert({
+          property_id: property.id,
+          agent_id: user.id,
+          full_address: form.address.trim(),
+        });
+
+      if (addressError) {
+        throw new Error(
+          `Your property was saved, but its private address could not be saved: ${addressError.message}. Please contact DitiHomes support before trying again.`,
+        );
+      }
+
+      setMessage(
+        "Property submitted successfully! It is now awaiting DitiHomes admin verification.",
+      );
+
+      // Clear the form after successful submission.
+      setForm({
+        title: "",
+        description: "",
+        listingType: "",
+        propertyType: "",
+        state: "Lagos",
+        city: "",
+        area: "",
+        address: "",
+        price: "",
+        bedrooms: "",
+        bathrooms: "",
+        toilets: "",
+        size: "",
+        furnishing: "",
+        parking: "",
+      });
+
+      setLatitude(null);
+      setLongitude(null);
+      setImages([]);
+    } catch (error) {
+      console.error("Property submission error:", error);
+
+      // If the property itself was not created, remove uploaded images.
+      if (!createdPropertyId && uploadedPaths.length > 0) {
+        const { error: cleanupError } = await supabase.storage
+          .from("property-images")
+          .remove(uploadedPaths);
+
+        if (cleanupError) {
+          console.error("Image cleanup error:", cleanupError);
+        }
+      }
+
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while submitting your property.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputClass =
@@ -290,9 +485,14 @@ function AgentAddProperty() {
                 </div>
 
                 <PropertyLocationPicker
-                  latitude={latitude}
-                  longitude={longitude}
-                  onLocationSelect={handleLocationSelect}
+                  value={
+                    latitude !== null && longitude !== null
+                      ? { latitude, longitude }
+                      : null
+                  }
+                  onChange={({ latitude, longitude }) =>
+                    handleLocationSelect(latitude, longitude)
+                  }
                 />
               </div>
 
@@ -328,7 +528,7 @@ function AgentAddProperty() {
                     id="price"
                     name="price"
                     type="number"
-                    min="0"
+                    min="1"
                     value={form.price}
                     onChange={updateField}
                     required
@@ -454,7 +654,7 @@ function AgentAddProperty() {
                   Click to upload property images
                 </span>
                 <span className="mt-2 text-xs text-(--dh-muted)">
-                  JPG, PNG or WEBP · Up to 10 images
+                  JPG, PNG or WEBP · Up to 10 images · 5MB each
                 </span>
 
                 <input
@@ -521,6 +721,7 @@ function AgentAddProperty() {
             {message && (
               <div
                 role="status"
+                aria-live="polite"
                 className="rounded-xl border border-(--dh-success)/30 bg-(--dh-success)/10 p-4 text-sm text-(--dh-success)"
               >
                 {message}
@@ -538,9 +739,10 @@ function AgentAddProperty() {
 
               <button
                 type="submit"
-                className="rounded-xl bg-(--dh-gold) px-7 py-3 text-sm font-semibold text-black transition hover:opacity-90"
+                disabled={isSubmitting}
+                className="rounded-xl bg-(--dh-gold) px-7 py-3 text-sm font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Submit for Review
+                {isSubmitting ? "Submitting Property..." : "Submit for Review"}
               </button>
             </div>
           </form>
